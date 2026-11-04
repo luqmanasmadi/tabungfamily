@@ -274,19 +274,23 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
   const due = await monthlyDue();
   const total = Number(r.amount) > 0 ? Number(r.amount) : null;
   const paid_on = /^\d{4}-\d{2}-\d{2}$/.test(r.date ?? "") ? r.date : ymd(myt());
-  // Cash In / YYYY-MM-DD_Name.jpg (payment date; several members -> "Cik & Adib")
-  const url = await toDrive(bytes, file.mime, `${paid_on}_${targets.map((t) => t.name).join(" & ")}.${ext}`, "in");
+  const each = total ? Math.round((total / targets.length) * 100) / 100 : due;
+  // last share takes the rounding remainder so the split adds up exactly
+  const shares = targets.map((_, i) => total && i === targets.length - 1 ? Math.round((total - each * (targets.length - 1)) * 100) / 100 : each);
+
+  // Cash In / YYYY-MM-DD_Name_(MMYY).pdf — payment date + month(s) this pays for, e.g. 2026-11-05_Luqman_(1126)
+  // several members -> 2026-11-05_Cik_(1026)_Adib_(1126); several months -> (1026-1126)
+  const labels = await Promise.all(targets.map((t, i) => monthsLabel(t, shares[i], due)));
+  const url = await toDrive(bytes, file.mime, `${paid_on}_${targets.map((t, i) => [t.name, labels[i]].filter(Boolean).join("_")).join("_")}.${ext}`, "in");
 
   const batch_id = crypto.randomUUID();
-  const each = total ? Math.round((total / targets.length) * 100) / 100 : due;
   const notes: string[] = [];
   if (!total) notes.push("AI tak dapat baca jumlah — semak");
   if (r.error) notes.push(`AI ralat: ${r.error}`);
   if (unknown.length) notes.push(`Nama tak dikenali dalam caption: ${unknown.join(", ")}`);
   const rows = targets.map((t, i) => ({
     member_id: t.id, paid_on,
-    // last share takes the rounding remainder so the split adds up exactly
-    amount: total && i === targets.length - 1 ? Math.round((total - each * (targets.length - 1)) * 100) / 100 : each,
+    amount: shares[i],
     method: "transfer", ref, receipt_url: url, tg_file_uid: file.uid, batch_id, sent_by: me.id, source: "bot",
     status: "pending", note: notes.join(" · ") || null, payee: r.payee ? String(r.payee).slice(0, 120) : null,
   }));
@@ -303,6 +307,24 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
     await send(chat, `Saya tak kenal nama <b>${esc(unknown.join(", "))}</b>. Bayaran ini untuk siapa?`, { reply_markup: { inline_keyboard: kb } });
   }
   return notifyBatch(batch_id);
+}
+
+/**
+ * Month(s) a new payment will cover for member m, as "(MMYY)" or "(MMYY-MMYY)".
+ * Counts fees already approved or waiting, so two receipts in a row get consecutive months (FIFO, same as the app).
+ */
+async function monthsLabel(m: Any, amount: number, due: number) {
+  const [{ data: br }, { data: pays }] = await Promise.all([
+    db.from("member_breaks").select("member_id,from_month,to_month").eq("member_id", m.id),
+    db.from("cash_in").select("amount").eq("member_id", m.id).eq("kind", "yuran").in("status", ["approved", "pending"]),
+  ]);
+  const list = dueMonths(m, br ?? [], nowIdx() + 36);
+  const paid = (pays ?? []).reduce((s: number, p: Any) => s + Number(p.amount), 0);
+  const a = Math.floor((paid + 0.005) / due);
+  const z = Math.max(a, Math.ceil((paid + amount - 0.005) / due) - 1);
+  const mmyy = (i: number) => `${String((i % 12) + 1).padStart(2, "0")}${String(Math.floor(i / 12)).slice(2)}`;
+  if (list[a] === undefined) return "";
+  return `(${mmyy(list[a])}${z > a && list[z] !== undefined ? "-" + mmyy(list[z]) : ""})`;
 }
 
 async function notifyBatch(batch_id: string) {
