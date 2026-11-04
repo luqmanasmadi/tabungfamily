@@ -278,8 +278,8 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
   // last share takes the rounding remainder so the split adds up exactly
   const shares = targets.map((_, i) => total && i === targets.length - 1 ? Math.round((total - each * (targets.length - 1)) * 100) / 100 : each);
 
-  // Cash In / YYYY-MM-DD_Name_(MMYY).pdf — payment date + month(s) this pays for, e.g. 2026-11-05_Luqman_(1126)
-  // several members -> 2026-11-05_Cik_(1026)_Adib_(1126); several months -> (1026-1126)
+  // Cash In / YYYY-MM-DD_Name_(YYMM).pdf — payment date + month(s) this pays for, e.g. 2026-11-05_Luqman_(2611)
+  // several members -> 2026-11-05_Cik_(2610)_Adib_(2611); several months -> (2610-2611)
   const labels = await Promise.all(targets.map((t, i) => monthsLabel(t, shares[i], due)));
   const url = await toDrive(bytes, file.mime, `${paid_on}_${targets.map((t, i) => [t.name, labels[i]].filter(Boolean).join("_")).join("_")}.${ext}`, "in");
 
@@ -310,7 +310,7 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
 }
 
 /**
- * Month(s) a new payment will cover for member m, as "(MMYY)" or "(MMYY-MMYY)".
+ * Month(s) a new payment will cover for member m, as "(YYMM)" or "(YYMM-YYMM)", e.g. (2611).
  * Counts fees already approved or waiting, so two receipts in a row get consecutive months (FIFO, same as the app).
  */
 async function monthsLabel(m: Any, amount: number, due: number) {
@@ -322,9 +322,9 @@ async function monthsLabel(m: Any, amount: number, due: number) {
   const paid = (pays ?? []).reduce((s: number, p: Any) => s + Number(p.amount), 0);
   const a = Math.floor((paid + 0.005) / due);
   const z = Math.max(a, Math.ceil((paid + amount - 0.005) / due) - 1);
-  const mmyy = (i: number) => `${String((i % 12) + 1).padStart(2, "0")}${String(Math.floor(i / 12)).slice(2)}`;
+  const yymm = (i: number) => `${String(Math.floor(i / 12)).slice(2)}${String((i % 12) + 1).padStart(2, "0")}`;
   if (list[a] === undefined) return "";
-  return `(${mmyy(list[a])}${z > a && list[z] !== undefined ? "-" + mmyy(list[z]) : ""})`;
+  return `(${yymm(list[a])}${z > a && list[z] !== undefined ? "-" + yymm(list[z]) : ""})`;
 }
 
 async function notifyBatch(batch_id: string) {
