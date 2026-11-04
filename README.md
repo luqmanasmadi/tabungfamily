@@ -47,7 +47,10 @@ Sediakan satu fail nota peribadi untuk simpan nilai-nilai di bawah (token, ID, s
      | `SUPABASE_URL` | `https://xxxx.supabase.co` (dapat di langkah 4 — boleh isi kemudian) |
      | `SERVICE_KEY` | Supabase **service_role** key (langkah 4) — rahsia! |
 4. Selepas Supabase siap (langkah 4) dan `schema.sql` dijalankan: pilih fungsi **`setup`** → **Run** → benarkan semua permission.
-   Ia akan cipta `My Drive/TabungFamily/TabungFamily Backup` (Google Sheet), tab-tab, Dashboard, trigger jam 3 pagi + onEdit, dan snapshot pertama.
+   Ia akan cipta `My Drive/Tabung Family/TabungFamily Backup` (Google Sheet), tab-tab, Dashboard, trigger jam 3 pagi + onEdit, dan snapshot pertama.
+   Resit disimpan dalam:
+   - `My Drive/Tabung Family/Cash In/YYYY-MM-DD_Nama.jpg` (peribadi, tarikh bayar)
+   - `My Drive/Tabung Family/Cash Out/YYYY-MM-DD_Kategori_Perkara.jpg` (sesiapa dengan link boleh lihat)
 5. **Deploy → New deployment → Web app**:
    - Execute as: **Me**
    - Who has access: **Anyone**
@@ -123,7 +126,7 @@ Buka `supabase/cron.sql`, ganti `YOUR_PROJECT_REF` dan `YOUR_CRON_SECRET` (sama 
 | Setiap hari 8:00pm | Kekalkan projek percuma aktif. Jika esok 1hb → hantar peringatan bulanan ke group + DM ahli + DM admin (dengan pautan *Kongsi ke WhatsApp*). |
 | 1 Januari 9:00am | Penyata tahunan PDF ke setiap ahli (tahun lepas). |
 | Setiap malam 3:00am | Snapshot penuh ke Google Sheet (trigger Apps Script). |
-| Mingguan | Salinan Sheet ke `TabungFamily/Backup mingguan/`, simpan 12 terkini. |
+| Mingguan | Salinan Sheet ke `Tabung Family/Backup mingguan/`, simpan 12 terkini. |
 
 ## 8. Web (GitHub Pages)
 

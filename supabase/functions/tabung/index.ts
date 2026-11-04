@@ -137,8 +137,11 @@ async function appsScript(payload: Any) {
   if (!j.ok) throw new Error("Google: " + j.error);
   return j;
 }
-const toDrive = async (bytes: Uint8Array, mime: string, name: string, folder: string, isPublic: boolean) =>
-  (await appsScript({ action: "upload", name, mime, folder, public: isPublic, data: encodeBase64(bytes) })).url as string;
+/** Saves a receipt to My Drive / Tabung Family / Cash In (private) or Cash Out (public). */
+const toDrive = async (bytes: Uint8Array, mime: string, name: string, kind: "in" | "out") =>
+  (await appsScript({ action: "upload", name, mime, kind, public: kind === "out", data: encodeBase64(bytes) })).url as string;
+const CAT_LABEL: Record<string, string> = { kampung: "Balik kampung", lain: "Lain-lain" }; // same labels as the web app
+const catLabel = (slug: string) => CAT_LABEL[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 
 function pickFile(msg: Any) {
   if (msg.photo?.length) {
@@ -252,7 +255,8 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
   const due = await monthlyDue();
   const total = Number(r.amount) > 0 ? Number(r.amount) : null;
   const paid_on = /^\d{4}-\d{2}-\d{2}$/.test(r.date ?? "") ? r.date : ymd(myt());
-  const url = await toDrive(bytes, file.mime, `IN_${targets.map((t) => t.name).join("+")}_${paid_on}_${ref ?? file.uid}.${ext}`, paid_on.slice(0, 7), false);
+  // Cash In / YYYY-MM-DD_Name.jpg (payment date; several members -> "Cik & Adib")
+  const url = await toDrive(bytes, file.mime, `${paid_on}_${targets.map((t) => t.name).join(" & ")}.${ext}`, "in");
 
   const batch_id = crypto.randomUUID();
   const each = total ? Math.round((total / targets.length) * 100) / 100 : due;
@@ -349,7 +353,8 @@ async function cashOut(text: string, file: Any) {
   const description = m[3].trim() || category;
   const day = ymd(myt());
   const { bytes, ext } = await tgFile(file.id);
-  const url = await toDrive(bytes, file.mime, `OUT_${day}_${category}_${amount}.${ext}`, day.slice(0, 7), true);
+  // Cash Out / YYYY-MM-DD_Category_Item.jpg
+  const url = await toDrive(bytes, file.mime, `${day}_${catLabel(category)}_${description}.${ext}`, "out");
   const { data: row, error } = await db.from("cash_out")
     .insert({ spent_on: day, description, category, amount, receipt_url: url, tg_file_uid: file.uid, source: "bot" }).select().single();
   if (error) throw error;
@@ -527,8 +532,8 @@ async function adminAction(body: Any) {
   if (body.action === "remind") return { ok: true, ...(await reminder(true)) };
   if (body.action === "upload") {
     // receipt picked in the web admin (cash-out) -> Google Drive
-    const folder = String(body.folder || ymd(myt()).slice(0, 7));
-    const r = await appsScript({ action: "upload", name: body.name, mime: body.mime, folder, public: !!body.public, data: body.data });
+    const kind = body.kind === "in" ? "in" : body.kind === "out" || body.public ? "out" : "in";
+    const r = await appsScript({ action: "upload", name: body.name, mime: body.mime, kind, public: kind === "out", data: body.data });
     return { ok: true, url: r.url };
   }
   return { ok: false, error: "unknown action" };

@@ -1287,7 +1287,10 @@ document.addEventListener('submit', async (e) => {
       if (file) {
         toast(t('uploading'), 20000);
         const day = $('#oT').value;
-        const r = await edge('upload', { name: `OUT_${day}_${$('#oC').value}_${amount}_${file.name}`, mime: file.type || 'application/octet-stream', data: DEMO ? '' : await fileB64(file), public: true, folder: day.slice(0, 7) });
+        // Drive: Tabung Family / Cash Out / YYYY-MM-DD_Category_Item.ext
+        const ext = (file.name.match(/\.[a-z0-9]{2,5}$/i) || [file.type === 'application/pdf' ? '.pdf' : '.jpg'])[0].toLowerCase();
+        const catLabel = CAT.find((c) => c[0] === $('#oC').value)?.[1] || $('#oC').value;
+        const r = await edge('upload', { name: `${day}_${catLabel}_${description}${ext}`, mime: file.type || 'application/octet-stream', data: DEMO ? '' : await fileB64(file), kind: 'out', public: true });
         receipt_url = DEMO ? URL.createObjectURL(file) : r.url;
       }
       await api.insert('cash_out', { spent_on: $('#oT').value, description, category: $('#oC').value, amount, receipt_url, legacy: !receipt_url, source: 'manual' });

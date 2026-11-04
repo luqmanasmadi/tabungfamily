@@ -1,10 +1,12 @@
 /**
  * =====================================================================
  * TabungFamily — Google side (Apps Script web app)
- *  1. Saves receipt photos to Google Drive  (My Drive / TabungFamily / Resit / YYYY-MM)
+ *  1. Saves receipts to Google Drive:
+ *       My Drive / Tabung Family / Cash In  / YYYY-MM-DD_Name.jpg               (private)
+ *       My Drive / Tabung Family / Cash Out / YYYY-MM-DD_Category_Item.jpg      (anyone with the link)
  *  2. Keeps a backup Google Sheet in sync   (every change + full snapshot every night)
  *  3. Builds a Dashboard tab in that Sheet  (works even if the app is down)
- *  4. Keeps 12 weekly copies of the Sheet   (My Drive / TabungFamily / Backup mingguan)
+ *  4. Keeps 12 weekly copies of the Sheet   (My Drive / Tabung Family / Backup mingguan)
  *
  * SETUP (once):
  *  a. Project Settings > Script properties, add:
@@ -17,7 +19,8 @@
  * =====================================================================
  */
 
-const ROOT = 'TabungFamily';
+const ROOT = 'Tabung Family';
+const OLD_ROOT = 'TabungFamily'; // earlier name: renamed automatically the first time
 const MON = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
 const NAVY = '#1F2A5C', BLUE = '#3F5BB5', BLUSH = '#DDE3F8', PAPER = '#F6F3FD', SUN = '#F7E58F';
 const PAID_BG = '#3F5BB5', DUE_BG = '#FBEBDD', NONE_BG = '#E4E6EE', OK_FG = '#2F6B3F', DUE_FG = '#8A420B';
@@ -60,12 +63,35 @@ function withLock_(fn) {
 
 // ------------------------------------------------------------------ 1. receipts to Drive
 function upload_(p) {
-  const folder = folder_(folder_(folder_(DriveApp.getRootFolder(), ROOT), 'Resit'), p.folder || 'lain');
-  const blob = Utilities.newBlob(Utilities.base64Decode(p.data), p.mime || 'application/octet-stream', p.name || 'resit');
+  // kind 'in' -> Cash In (private), 'out' -> Cash Out (public). Older callers only sent `public`.
+  const out = p.kind ? p.kind === 'out' : !!p.public;
+  const folder = folder_(root_(), out ? 'Cash Out' : 'Cash In');
+  const name = uniqueName_(folder, safeName_(p.name || 'resit'));
+  const blob = Utilities.newBlob(Utilities.base64Decode(p.data), p.mime || 'application/octet-stream', name);
   const file = folder.createFile(blob);
   // Money-out receipts are public (anyone with the link) for transparency; money-in receipts stay private.
   if (p.public) file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return { ok: true, id: file.getId(), url: file.getUrl() };
+}
+/** "2026-11-05_Kereta_Servis/minyak?.jpg" -> safe for Drive, max 150 chars. */
+function safeName_(n) {
+  return String(n).replace(/[\\/:*?"<>|\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150) || 'resit';
+}
+/** Adds " (2)", " (3)"… before the extension if the name is already used in that folder. */
+function uniqueName_(folder, name) {
+  const dot = name.lastIndexOf('.'), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+  let n = name, k = 2;
+  while (folder.getFilesByName(n).hasNext()) n = base + ' (' + (k++) + ')' + ext;
+  return n;
+}
+/** My Drive / Tabung Family (renames the older "TabungFamily" folder if that is what exists). */
+function root_() {
+  const drive = DriveApp.getRootFolder();
+  if (!drive.getFoldersByName(ROOT).hasNext()) {
+    const old = drive.getFoldersByName(OLD_ROOT);
+    if (old.hasNext()) old.next().setName(ROOT);
+  }
+  return folder_(drive, ROOT);
 }
 function folder_(parent, name) {
   const it = parent.getFoldersByName(name);
@@ -78,7 +104,7 @@ function ss_() {
   if (id) { try { return SpreadsheetApp.openById(id); } catch (e) { /* deleted: make a new one */ } }
   const ss = SpreadsheetApp.create('TabungFamily Backup');
   ss.setSpreadsheetTimeZone('Asia/Kuala_Lumpur');
-  DriveApp.getFileById(ss.getId()).moveTo(folder_(DriveApp.getRootFolder(), ROOT));
+  DriveApp.getFileById(ss.getId()).moveTo(root_());
   props().setProperty('SHEET_ID', ss.getId());
   buildTabs_(ss);
   return ss;
@@ -208,7 +234,7 @@ function write_(sh, rows, width) {
 function weeklyCopy_(ss) {
   const last = Number(prop('LAST_WEEKLY') || 0);
   if (Date.now() - last < 6.5 * 864e5) return;
-  const folder = folder_(folder_(DriveApp.getRootFolder(), ROOT), 'Backup mingguan');
+  const folder = folder_(root_(), 'Backup mingguan');
   DriveApp.getFileById(ss.getId()).makeCopy('TabungFamily Backup ' + Utilities.formatDate(new Date(), 'Asia/Kuala_Lumpur', 'yyyy-MM-dd'), folder);
   props().setProperty('LAST_WEEKLY', String(Date.now()));
   const files = [];
