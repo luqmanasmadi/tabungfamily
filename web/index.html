@@ -339,7 +339,7 @@ const L = {
   pendE: ['Langkah 1', 'Step 1'], pendT: ['Resit <span class="em">menunggu</span>', 'Receipts <span class="em">waiting</span>'],
   pendNone: ['Tiada resit menunggu. 👍', 'No receipts waiting. 👍'],
   aiOk: ['Dibaca AI · {0}', 'Read by AI · {0}'], aiBad: ['AI tak dapat baca jumlah', "AI couldn't read amount"],
-  sentBy: ['Dihantar oleh {0}', 'Sent by {0}'], ref: ['Rujukan', 'Ref'], approve: ['Sahkan', 'Approve'], reject: ['Tolak', 'Reject'],
+  sentBy: ['Dihantar oleh {0}', 'Sent by {0}'], refPh: ['cth 255004112 (dari resit)', 'e.g. 255004112 (from the receipt)'], ref: ['Rujukan', 'Ref'], approve: ['Sahkan', 'Approve'], reject: ['Tolak', 'Reject'],
   approved: ['Disahkan ✓ — ahli dimaklumkan di Telegram.', 'Approved ✓ — members notified on Telegram.'],
   rejected: ['Ditolak — ahli dimaklumkan.', 'Rejected — members notified.'],
   demoNoTg: ['(Demo: Telegram tidak dihantar)', '(Demo: Telegram not sent)'],
@@ -558,6 +558,7 @@ async function demoEdge(action, body) {
   if (action === 'approve' || action === 'reject') {
     S.cashIn.filter((r) => r.batch_id === body.batch_id && r.status === 'pending').forEach((r) => {
       if (action === 'approve' && body.amounts?.[r.id] > 0) r.amount = Number(body.amounts[r.id]);
+      if (action === 'approve' && body.ref !== undefined) r.ref = body.ref || null;
       r.status = action === 'approve' ? 'approved' : 'rejected';
     });
     return { ok: true };
@@ -891,10 +892,12 @@ function renderAdmin() {
       return `<div class="batch" data-batch="${h(r0.batch_id)}">${thumb}<div>
         ${rows.map((r) => `<div class="prow"><b>${h(memberById(r.member_id)?.name ?? '?')}</b>
           <label class="amt"><span>RM</span><input type="number" min="0.01" step="0.01" inputmode="decimal" value="${r.amount}" data-row="${r.id}" aria-label="${t('amount')} ${h(memberById(r.member_id)?.name ?? '')}"></label></div>`).join('')}
-        <div class="prow small muted">${fmtDate(r0.paid_on)} · ${t('ref')}: ${h(r0.ref || '—')}</div>
+        <div class="prow small muted">${fmtDate(r0.paid_on)}</div>
+        <label class="f" for="ref-${h(r0.batch_id)}" style="margin-top:4px">${t('ref')}</label>
+        <input class="in-f" id="ref-${h(r0.batch_id)}" data-ref value="${h(r0.ref || '')}" placeholder="${t('refPh')}" maxlength="60" style="max-width:260px;min-height:40px">
         <div class="prow">${ai ? `<span class="tag warn">⚠ ${t('aiBad')}</span>` : `<span class="tag ok">✓ ${t('aiOk', h(r0.payee || '—'))}</span>`}
           ${other ? `<span class="tag blue">${t('sentBy', h(sender.name))}</span>` : ''}</div>
-        ${r0.note && !ai ? `<div class="small muted">${h(r0.note)}</div>` : ''}
+        ${r0.note ? `<div class="small muted">${h(r0.note.replace(/AI tak dapat baca jumlah — semak( · )?/, ''))}</div>` : ''}
         <div class="acts"><button type="button" class="btn danger" data-act="decide" data-v="reject">❌ ${t('reject')}</button>
           <button type="button" class="btn ok" data-act="decide" data-v="approve">✅ ${t('approve')}</button></div>
       </div></div>`;
@@ -1210,7 +1213,8 @@ document.addEventListener('click', async (e) => {
     const card = el.closest('[data-batch]'), batch_id = card.dataset.batch, amounts = {};
     card.querySelectorAll('input[data-row]').forEach((i) => { if (Number(i.value) > 0) amounts[i.dataset.row] = Number(i.value); });
     card.querySelectorAll('button').forEach((b) => (b.disabled = true));
-    try { await edge(v, { batch_id, amounts }); toast((v === 'approve' ? t('approved') : t('rejected')) + (DEMO ? ' ' + t('demoNoTg') : '')); }
+    const ref = card.querySelector('input[data-ref]')?.value.trim() ?? undefined;
+    try { await edge(v, { batch_id, amounts, ref }); toast((v === 'approve' ? t('approved') : t('rejected')) + (DEMO ? ' ' + t('demoNoTg') : '')); }
     catch (err) { toast(t('error', err.message || err), 6000); }
     await refresh();
   }

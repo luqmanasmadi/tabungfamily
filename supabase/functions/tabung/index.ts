@@ -106,24 +106,43 @@ Return JSON only:
 amount = total paid in RM. ref = transaction / reference number exactly as printed. payee = recipient name.
 Use null when unsure. Never guess.`;
 
+/**
+ * Ask Gemini to read the receipt. Returns the fields, or { error } with a short reason that is shown
+ * to the admin, so a wrong key or a retired model is visible in Telegram instead of only in the logs.
+ * Tries GEMINI_MODEL first, then newer "flash" aliases if that model no longer exists.
+ */
 async function readReceipt(bytes: Uint8Array, mime: string): Promise<Any> {
-  if (!env("GEMINI_KEY")) return {};
-  try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env("GEMINI_MODEL", "gemini-2.5-flash")}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env("GEMINI_KEY") },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime, data: encodeBase64(bytes) } }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0 },
-      }),
-    });
-    const j = await r.json();
-    if (j.error) console.error("gemini", JSON.stringify(j.error));
-    return JSON.parse(j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}");
-  } catch (e) {
-    console.error("gemini", e);
-    return {};
+  if (!env("GEMINI_KEY")) return { error: "GEMINI_KEY belum diisi" };
+  const models = [...new Set([env("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean))];
+  let last = "";
+  for (const model of models) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env("GEMINI_KEY") },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime, data: encodeBase64(bytes) } }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0 },
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (j.error) {
+        last = `${model}: ${j.error.status ?? r.status} ${String(j.error.message ?? "").slice(0, 120)}`;
+        console.error("gemini", last);
+        if (r.status === 404 || j.error.status === "NOT_FOUND") continue; // model retired -> try the next one
+        return { error: last };
+      }
+      const text = String(j?.candidates?.[0]?.content?.parts?.map((p: Any) => p.text ?? "").join("") ?? "")
+        .replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      if (!text) return { error: `${model}: jawapan kosong (${j?.candidates?.[0]?.finishReason ?? j?.promptFeedback?.blockReason ?? "?"})` };
+      const out = JSON.parse(text);
+      return Array.isArray(out) ? out[0] ?? {} : out;
+    } catch (e) {
+      last = `${model}: ${(e as Error)?.message ?? e}`.slice(0, 160);
+      console.error("gemini", last);
+    }
   }
+  return { error: last || "tiada model Gemini yang berfungsi" };
 }
 
 async function appsScript(payload: Any) {
@@ -262,6 +281,7 @@ async function cashIn(chat: number, me: Any, file: Any, caption: string) {
   const each = total ? Math.round((total / targets.length) * 100) / 100 : due;
   const notes: string[] = [];
   if (!total) notes.push("AI tak dapat baca jumlah — semak");
+  if (r.error) notes.push(`AI ralat: ${r.error}`);
   if (unknown.length) notes.push(`Nama tak dikenali dalam caption: ${unknown.join(", ")}`);
   const rows = targets.map((t, i) => ({
     member_id: t.id, paid_on,
@@ -308,11 +328,17 @@ async function listPending() {
 }
 
 /** Approve or reject a whole receipt. Used by the bot buttons and the web admin. */
-async function decideBatch(batch_id: string, approve: boolean, amounts?: Record<string, number>) {
+async function decideBatch(batch_id: string, approve: boolean, amounts?: Record<string, number>, ref?: string | null) {
   if (approve && amounts) {
     for (const [id, amount] of Object.entries(amounts)) {
       if (Number(amount) > 0) await db.from("cash_in").update({ amount: Number(amount) }).eq("id", Number(id)).eq("status", "pending");
     }
+  }
+  // the admin may type / correct the bank reference before approving (AI could not read it)
+  if (approve && ref !== undefined) {
+    const clean = String(ref ?? "").trim() || null;
+    const { error } = await db.from("cash_in").update({ ref: clean }).eq("batch_id", batch_id).eq("status", "pending");
+    if (error) throw new Error(error.code === "23505" ? `No. rujukan ${clean} sudah digunakan` : error.message);
   }
   const status = approve ? "approved" : "rejected";
   const { data: rows } = await db.from("cash_in").update({ status }).eq("batch_id", batch_id).eq("status", "pending")
@@ -522,7 +548,7 @@ async function isAdminRequest(req: Request) {
 
 async function adminAction(body: Any) {
   if (body.action === "approve" || body.action === "reject") {
-    const n = await decideBatch(body.batch_id, body.action === "approve", body.amounts);
+    const n = await decideBatch(body.batch_id, body.action === "approve", body.amounts, body.ref);
     return { ok: true, updated: n };
   }
   if (body.action === "backup") {
