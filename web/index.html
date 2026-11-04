@@ -326,7 +326,8 @@ const L = {
   total: ['Jumlah', 'Total'],
   tagline: ['Membina masa depan bersama', 'Building the future together'],
   footRem: ['Peringatan auto · hari terakhir bulan, 8:00pm', 'Auto reminder · last day of the month, 8:00pm'],
-  footPriv: ['Halaman awam: baca sahaja. No. rujukan & resit bayaran ahli tidak dipaparkan.', 'Public page: read-only. Member payment refs & receipts are not shown.'],
+  footPriv: ['Halaman awam: baca sahaja. Resit bayaran ahli tidak dipaparkan.', 'Public page: read-only. Member payment receipts are not shown.'],
+  refL: ['Rujukan {0}', 'Ref {0}'],
   demoBar: ['Mod demo — data contoh. Isi CONFIG dalam index.html untuk guna data sebenar.', 'Demo mode — sample data. Fill CONFIG in index.html to use real data.'],
   loadErr: ['Tak dapat muat data: {0}', 'Could not load data: {0}'],
   // admin
@@ -485,6 +486,12 @@ async function fetchAll(q) {
     from += 1000;
   }
 }
+/** Approved money-in for the public page. Falls back to no `ref` if the database has not granted it yet. */
+async function publicCashIn() {
+  const cols = 'id,member_id,paid_on,amount,method,status,kind,for_month';
+  try { return await fetchAll(() => sb.from('cash_in').select(cols + ',ref').eq('status', 'approved').order('id')); }
+  catch (e) { return fetchAll(() => sb.from('cash_in').select(cols).eq('status', 'approved').order('id')); }
+}
 async function loadData() {
   if (DEMO) {
     if (!S.loadedAt) Object.assign(S, /[?&]demo=kosong\b/.test(location.search) ? { settings: { ...demoData().settings, last_backup_at: '' }, members: [], breaks: [], cashIn: [], cashOut: [] } : demoData());
@@ -495,7 +502,7 @@ async function loadData() {
     fetchAll(() => sb.from('settings').select('key,value').order('key')),
     fetchAll(() => sb.from('members').select(admin ? '*' : 'id,name,start_month').order('id')),
     fetchAll(() => sb.from('member_breaks').select(admin ? '*' : 'id,member_id,from_month,to_month').order('id')),
-    fetchAll(() => admin ? sb.from('cash_in').select('*').order('id') : sb.from('cash_in').select('id,member_id,paid_on,amount,method,status,kind,for_month').eq('status', 'approved').order('id')),
+    admin ? fetchAll(() => sb.from('cash_in').select('*').order('id')) : publicCashIn(),
     fetchAll(() => sb.from('cash_out').select('*').order('id')),
   ]);
   S.settings = Object.fromEntries(set.map((r) => [r.key, r.value]));
@@ -583,17 +590,20 @@ function paidBy(id, upto) { return approvedIn().filter((p) => p.member_id === id
  * oldest owed month first (FIFO). Same rule as the Google Sheet backup.
  */
 function coverage(m, list) {
-  const f = fee(), cov = {}, dates = {}, inList = new Set(list);
-  const add = (i, amt, d) => { cov[i] = (cov[i] || 0) + amt; (dates[i] = dates[i] || []).includes(d) || dates[i].push(d); };
+  const f = fee(), cov = {}, dates = {}, refs = {}, inList = new Set(list);
+  const add = (i, amt, d, ref) => {
+    cov[i] = (cov[i] || 0) + amt; (dates[i] = dates[i] || []).includes(d) || dates[i].push(d);
+    if (ref) (refs[i] = refs[i] || []).includes(ref) || refs[i].push(ref);
+  };
   const pays = approvedIn().filter((p) => p.member_id === m.id && isFee(p)).sort((a, b) => (a.paid_on < b.paid_on ? -1 : a.paid_on > b.paid_on ? 1 : a.id - b.id));
   const pool = [];
   pays.forEach((p) => {
     const i = p.for_month ? mi(p.for_month) : null;
     if (i !== null && inList.has(i)) {
       const put = Math.min(Math.max(0, f - (cov[i] || 0)), p.amount);
-      if (put > 0) add(i, put, p.paid_on);
-      if (p.amount - put > 0.005) pool.push({ amt: p.amount - put, d: p.paid_on });
-    } else pool.push({ amt: p.amount, d: p.paid_on });
+      if (put > 0) add(i, put, p.paid_on, p.ref);
+      if (p.amount - put > 0.005) pool.push({ amt: p.amount - put, d: p.paid_on, ref: p.ref });
+    } else pool.push({ amt: p.amount, d: p.paid_on, ref: p.ref });
   });
   let k = 0;
   for (const x of pool) {
@@ -602,10 +612,10 @@ function coverage(m, list) {
       const i = list[k], room = f - (cov[i] || 0);
       if (room <= 0.005) { k++; continue; }
       const put = Math.min(room, left);
-      add(i, put, x.d); left -= put;
+      add(i, put, x.d, x.ref); left -= put;
     }
   }
-  return { cov, dates };
+  return { cov, dates, refs };
 }
 /** Member standing at month index `idx` counting payments up to date `upto` (default: all). */
 function standingAt(m, idx = NOW(), upto) {
@@ -707,7 +717,7 @@ function renderPublic() {
 
   // recent
   const yr = String(y);
-  const tx = approvedIn().filter((p) => p.paid_on.startsWith(yr)).map((p) => ({ d: p.paid_on, id: p.id, k: 'in', a: p.amount, t: p.member_id ? t(isFee(p) ? 'payFrom' : 'giftFrom', memberById(p.member_id)?.name ?? '?') : t('otherIn'), s: p.method === 'cash' ? t('cash') : t('transfer') }))
+  const tx = approvedIn().filter((p) => p.paid_on.startsWith(yr)).map((p) => ({ d: p.paid_on, id: p.id, k: 'in', a: p.amount, t: p.member_id ? t(isFee(p) ? 'payFrom' : 'giftFrom', memberById(p.member_id)?.name ?? '?') : t('otherIn'), s: (p.method === 'cash' ? t('cash') : t('transfer')) + (p.ref ? ' · ' + t('refL', p.ref) : '') }))
     .concat(S.cashOut.filter((o) => o.spent_on.startsWith(yr)).map((o) => ({ d: o.spent_on, id: o.id, k: 'out', a: o.amount, t: o.description, s: catName(o.category) })))
     .sort((a, b) => (b.d === a.d ? b.id - a.id : b.d < a.d ? -1 : 1)).slice(0, 6);
 
@@ -782,7 +792,7 @@ function renderPublic() {
         const i = y * 12 + k, stt = monthStatus(m, i, c), ds = (c.dates[i] || []).slice().sort();
         const sym = { paid: '✓', part: '½', unpaid: '!', up: '', none: '' }[stt];
         const lb = { paid: t('lgPaid'), part: t('lgPart'), unpaid: t('lgUnpaid'), up: t('lgUp'), none: t('lgNone') }[stt];
-        const when = ds.length && stt !== 'none' ? ' · ' + t('paidOn', ds.map(fmtDate).join(', ')) : '';
+        const when = (ds.length && stt !== 'none' ? ' · ' + t('paidOn', ds.map(fmtDate).join(', ')) : '') + (c.refs[i] && stt !== 'none' ? ' · ' + t('refL', c.refs[i].join(', ')) : '');
         const last = ds.length && stt !== 'none' ? ds[ds.length - 1] : '';
         return `<td class="c"><span class="dot ${stt}" title="${mon(k)} ${y}: ${lb}${when}" aria-label="${mon(k)}: ${lb}${when}">${sym}</span>${last ? `<small class="pd">${Number(last.slice(8, 10))}/${Number(last.slice(5, 7))}/${last.slice(2, 4)}</small>` : ''}</td>`;
       }).join('');

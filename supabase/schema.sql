@@ -106,7 +106,7 @@ revoke all on settings, members, member_breaks, cash_in, cash_out from anon;
 grant select (key, value)                                     on settings      to anon;
 grant select (id, name, start_month)                          on members       to anon;
 grant select (id, member_id, from_month, to_month)            on member_breaks to anon;
-grant select (id, member_id, paid_on, amount, method, status, kind, for_month) on cash_in to anon;  -- no receipt/ref (privacy)
+grant select (id, member_id, paid_on, amount, method, status, kind, for_month, ref) on cash_in to anon;  -- ref shown publicly; receipt link & note stay private
 grant select                                                  on cash_out      to anon;  -- receipts public (transparency)
 
 grant all on settings, members, member_breaks, cash_in, cash_out to authenticated;
