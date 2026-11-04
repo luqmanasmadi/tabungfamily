@@ -1,0 +1,5 @@
+# Real family records — never publish
+data/
+.DS_Store
+supabase/.temp/
+supabase/.branches/

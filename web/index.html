@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TabungFamily</title>
+<meta name="description" content="Tabung keluarga — telus untuk semua.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="logo-mark.png">
+<link rel="apple-touch-icon" href="logo-mark.png">
+<meta property="og:image" content="logo.jpg">
+<script>
+/* =====================================================================
+   CONFIG — fill these after setting up Supabase (see README).
+   Leave SUPABASE_URL empty to run DEMO MODE with sample data.
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: '',        // e.g. https://abcdxyz.supabase.co
+  SUPABASE_ANON_KEY: '',   // Supabase > Settings > API > anon public key
+  BOT_USERNAME: '',        // e.g. TabungKamiBot (without @)
+};
+</script>
+<style>
+:root{
+  --ink:#1F2A5C; --muted:#5A6699; --paper:#F6F3FD; --blush:#DDE3F8; --rose:#AEBDEA; --blue:#3F5BB5;
+  --amber:#F9B774; --sun:#F7E58F; --mint:#A8E0B5; --red:#E5484D; --line:#D6DCF2; --card:#fff;
+  --due-bg:#FBEBDD; --due-bd:#C0661B; --due-fg:#8A420B; --none:#E4E6EE; --ok-fg:#256B39;
+  --r:18px; --shadow:0 14px 34px -14px rgba(31,42,92,.45);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;overflow-x:hidden}
+a{color:var(--blue)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+h2{font-size:22px} h3{font-size:17px}
+.em{color:var(--blue)}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin:0 0 6px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+[hidden]{display:none!important}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(246,243,253,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em;text-decoration:none;color:inherit;min-height:44px}
+.logo img{width:38px;height:38px;border-radius:11px;background:#fff;object-fit:contain;padding:2px;border:1px solid var(--line);flex:none}
+.login-logo{display:block;width:200px;max-width:70%;height:auto;margin:0 auto 18px}
+.foot .brand{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink)}
+.foot .brand img{width:30px;height:30px;border-radius:8px;background:#fff}
+.nav{display:flex;gap:4px;margin-left:12px}
+.nav a{padding:10px 14px;border-radius:12px;text-decoration:none;color:var(--muted);font-weight:600;min-height:44px;display:flex;align-items:center}
+.nav a:hover{background:var(--blush);color:var(--ink)}
+.sp{flex:1}
+.lang{display:flex;border:1px solid var(--line);border-radius:12px;background:#fff;padding:3px}
+.lang button{border:0;background:none;padding:0 12px;min-height:38px;min-width:44px;border-radius:9px;font-weight:700;cursor:pointer;color:var(--muted)}
+.lang button[aria-pressed=true]{background:var(--ink);color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;cursor:pointer;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--rose)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:hover{background:#3550a3}
+.btn.ink{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.danger{color:#B4262B;border-color:#F2C2C3}
+.btn.ok{background:#2F7D4A;border-color:#2F7D4A;color:#fff}
+.btn.sm{min-height:36px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:600;cursor:pointer;text-decoration:underline;min-height:32px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.grid{display:grid;gap:18px}
+main{padding:22px 0 60px}
+.sec{margin-top:26px}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+
+.years{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.years button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:700;cursor:pointer;color:var(--muted)}
+.years button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.hero-row{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-top:16px}
+.hero{position:relative;border-radius:var(--r);padding:30px;color:#fff;background:linear-gradient(150deg,#1F2A5C,#3F5BB5);box-shadow:var(--shadow);overflow:hidden}
+.hero .eyebrow{color:#C9D3F5}
+.hero h1{font-size:clamp(28px,4.2vw,42px);margin:6px 0 10px;max-width:15ch}
+.hero h1 em{font-style:normal;color:var(--sun)}
+.hero p{color:#DCE2F8;margin:0 0 18px;max-width:46ch}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px}
+.chip.sun{background:var(--sun);color:var(--ink)}
+.tilt{position:absolute;top:18px;right:18px;transform:rotate(6deg);background:var(--sun);color:var(--ink);font-weight:800;font-size:11px;letter-spacing:.14em;padding:5px 10px;border-radius:8px}
+.tilt.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px}
+.hero .bot{display:inline-flex;margin-left:10px;color:#fff;font-weight:600}
+.bal .big{font-size:clamp(34px,5vw,48px);font-weight:800;letter-spacing:-.03em;margin:4px 0 2px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.tile{background:var(--paper);border-radius:14px;padding:12px}
+.tile b{display:block;font-size:17px;margin-top:2px}
+.tile span{font-size:12px;color:var(--muted)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:18px}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.kpi .s{font-size:13px;color:var(--muted)}
+.kpi.warn .v{color:var(--due-fg)}
+
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+.bars{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:200px;margin-top:16px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.bars .m{display:flex;gap:3px;align-items:flex-end;justify-content:center;height:100%}
+.bars .b{width:42%;max-width:16px;border-radius:5px 5px 0 0;min-height:2px}
+.bars .in{background:var(--blue)} .bars .out{background:var(--amber)}
+.bars-l{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:11.5px;color:var(--muted);text-align:center;margin-top:6px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+
+.tx{list-style:none;margin:10px 0 0;padding:0}
+.tx li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.tx li:last-child{border-bottom:0}
+.tx .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:800;flex:none}
+.tx .ic.in{background:var(--blush);color:var(--blue)} .tx .ic.out{background:#FDEBD8;color:var(--due-fg)}
+.tx .t{flex:1;min-width:0}
+.tx .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .t span{font-size:12.5px;color:var(--muted)}
+.tx .a{font-weight:700}
+.tx .a.in{color:var(--blue)} .tx .a.out{color:var(--due-fg)}
+
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -22px;padding:0 22px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr:last-child td{border-bottom:0}
+.mg th.c,.mg td.c{text-align:center;padding:8px 3px}
+.mg td.nm{font-weight:700;white-space:nowrap}
+.mg td.nm small{display:block;font-weight:600;font-size:11.5px;color:var(--muted)}
+.dot{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:13px;font-weight:800}
+.dot.paid{background:var(--blue);color:#fff}
+.dot.part{background:var(--due-bg);border:2px solid var(--due-bd);color:var(--due-fg);background-image:linear-gradient(90deg,var(--blue) 50%,transparent 50%)}
+.dot.unpaid{background:var(--due-bg);border:2px solid var(--due-bd);color:var(--due-fg)}
+.dot.up{border:2px dashed var(--rose);color:var(--rose)}
+.dot.none{background:var(--none);color:#9AA0B8}
+.mg small.pd{display:block;font-size:10px;line-height:1.1;color:var(--muted);margin-top:3px;white-space:nowrap}
+.cat{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--paper);color:var(--ink);white-space:nowrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
+/* spending by category */
+.cbar{display:grid;grid-template-columns:minmax(92px,auto) 1fr auto;gap:6px 10px;align-items:center;margin-top:14px}
+.cbar .lb{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.cbar .tr{height:14px;border-radius:0 4px 4px 0;min-width:2px}
+.cbar .v{font-size:13px;text-align:right;white-space:nowrap}
+.cbar .v span{color:var(--muted);font-weight:500;margin-left:6px}
+.ybars{display:grid;grid-template-columns:44px 1fr auto;gap:8px 10px;align-items:center;margin-top:14px}
+.ybars .yr{font-weight:700;font-size:13.5px;background:none;border:0;padding:0;cursor:pointer;color:var(--ink);text-align:left;min-height:32px}
+.ybars .yr[aria-current=true]{color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+.ybars .stk{display:flex;gap:2px;height:18px}
+.ybars .stk i{display:block;height:100%;min-width:2px}
+.ybars .stk i:first-child{border-radius:4px 0 0 4px}.ybars .stk i:last-child{border-radius:0 4px 4px 0}.ybars .stk i:only-child{border-radius:4px}
+.ybars .v{font-size:13px;font-weight:700;text-align:right;white-space:nowrap}
+details.tv{margin-top:14px;font-size:13.5px}
+details.tv summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:32px;display:flex;align-items:center}
+.tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.tag.ok{background:#DDF3E3;color:var(--ok-fg)} .tag.warn{background:var(--due-bg);color:var(--due-fg)} .tag.grey{background:var(--none);color:#555C78} .tag.blue{background:var(--blush);color:var(--blue)}
+.foot{margin-top:34px;padding:22px 0;color:var(--muted);font-size:13px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.demo-bar{background:var(--sun);color:var(--ink);text-align:center;font-size:13px;font-weight:600;padding:8px 16px}
+
+/* bottom nav (phone) */
+.bnav{display:none}
+
+/* admin */
+.adm-top{background:var(--ink);color:#fff;border-bottom:0}
+.adm-top .logo{color:#fff}
+.adm-top .logo img{border-color:transparent}
+.adm-chip{background:var(--sun);color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.14em;padding:4px 8px;border-radius:7px}
+.adm-top .lang{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+.adm-top .lang button{color:#C9D3F5}
+.adm-top .lang button[aria-pressed=true]{background:#fff;color:var(--ink)}
+.adm-top .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
+.adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.adm-grid .full{grid-column:1/-1}
+.adm-grid>*,.two>*,.hero-row>*,.row2>*,.kpis>*{min-width:0}
+.in-f[type=file]{max-width:100%}
+.batch>*{min-width:0}
+@media (max-width:400px){.top .wrap{gap:8px}.lang button{min-width:40px;padding:0 8px}.adm-top .logo{display:none}.amt input{width:76px}}
+.batch{border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:96px 1fr;gap:14px;margin-top:12px}
+.thumb{width:96px;height:120px;border-radius:12px;background:var(--blush);display:grid;place-items:center;text-align:center;font-size:12px;font-weight:700;color:var(--blue);text-decoration:none;padding:6px;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.prow{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
+.prow b{min-width:70px}
+.amt{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.amt span{padding:0 8px;color:var(--muted);font-size:13px}
+.amt input{border:0;width:96px;min-height:40px;padding:0 8px 0 0;outline:none}
+.acts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+.in-f{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+textarea.in-f{padding:10px 12px;min-height:70px}
+.in-f:focus,.amt:focus-within{outline:2px solid var(--rose);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:500}
+.chk input{width:20px;height:20px;accent-color:var(--blue)}
+.tabs{display:flex;background:var(--paper);border-radius:12px;padding:4px;gap:4px;margin-top:12px}
+.tabs button{flex:1;border:0;background:none;min-height:40px;border-radius:9px;font-weight:700;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(31,42,92,.15)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.step{border:1px solid var(--line);border-radius:14px;padding:14px}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;margin-bottom:8px}
+.step.on{border-color:var(--blue);background:#F9FAFF}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.banner{border-radius:14px;padding:16px;background:#DDF3E3;color:var(--ok-fg);font-weight:600;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.err{color:#B4262B;font-size:13px;font-weight:600;margin-top:8px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted)}
+.login{max-width:420px;margin:40px auto}
+dialog{border:0;border-radius:var(--r);padding:0;max-width:460px;width:calc(100% - 32px);color:var(--ink);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(31,42,92,.45)}
+dialog .card{border:0}
+.info{background:var(--paper);border-radius:12px;padding:12px;font-size:13.5px;margin-top:12px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.cmp div{border:1px solid var(--line);border-radius:12px;padding:10px}
+.cmp b{display:block;font-size:20px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;z-index:60;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.mark-ok{color:var(--ok-fg);font-weight:700}.mark-w{color:var(--due-fg);font-weight:700}.mark-x{color:#B4262B;font-weight:700}
+.loading{padding:80px 0;text-align:center;color:var(--muted)}
+
+@media (max-width:980px){
+  .hero-row,.two{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:759px){
+  .wrap{padding:0 16px}
+  .nav,.top .hide-m{display:none}
+  .top .wrap{height:58px}
+  body{padding-bottom:84px}
+  .bnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;text-decoration:none;color:var(--muted);font-size:11.5px;font-weight:700;border-radius:12px}
+  .bnav a svg{width:22px;height:22px}
+  .bnav a[aria-current=page]{color:var(--blue);background:var(--blush)}
+  .card{padding:18px}
+  .scroll{margin:0 -18px;padding:0 18px}
+  .hero{padding:24px 20px}
+  .kpis{gap:12px}
+  .kpi .v{font-size:21px}
+  .adm-grid,.row2,.steps{grid-template-columns:1fr}
+  .batch{grid-template-columns:72px 1fr}
+  .thumb{width:72px;height:92px}
+  .tiles{gap:8px}
+  .tile{padding:10px}
+  .tile b{font-size:15px}
+  .bars{gap:3px;height:160px}
+  .bars-l{gap:3px;font-size:10px}
+}
+@media print{.top,.bnav,.years{display:none}}
+</style>
+</head>
+<body>
+<div id="demoBar" class="demo-bar" hidden></div>
+<header id="hdr" class="top"></header>
+<div id="app"><div class="loading">…</div></div>
+<nav id="bnav" class="bnav" aria-label="Menu"></nav>
+<dialog id="dlg"></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   TabungFamily — public dashboard + admin (single file)
+   ===================================================================== */
+const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
+const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+const XLSX_JS = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+/* Spending categories: fixed slug, BM / EN label, fixed colour (categorical palette, never re-ordered).
+   "lain" is the neutral "other" bucket. The bot's /out command and the import use the same slugs. */
+const CAT = [
+  ['kereta', 'Kereta', 'Car', '#2a78d6'], ['rumah', 'Rumah', 'House', '#eb6834'], ['melancong', 'Melancong', 'Travel', '#1baf7a'],
+  ['kampung', 'Balik kampung', 'Hometown trips', '#eda100'], ['kenduri', 'Kenduri', 'Kenduri / feasts', '#e87ba4'],
+  ['perubatan', 'Perubatan', 'Medical', '#008300'], ['raya', 'Raya', 'Raya', '#6250d6'], ['kecemasan', 'Kecemasan', 'Emergency', '#e34948'],
+  ['lain', 'Lain-lain', 'Other', '#8b8d98'],
+];
+const CAT_SYN = { 'kereta estima': 'kereta', car: 'kereta', kenderaan: 'kereta', house: 'rumah', travel: 'melancong', percutian: 'melancong', holiday: 'melancong',
+  'balik kampung': 'kampung', 'balik kg': 'kampung', hometown: 'kampung', majlis: 'kenduri', medical: 'perubatan', ubat: 'perubatan', hospital: 'perubatan',
+  emergency: 'kecemasan', bantuan: 'kecemasan', 'lain-lain': 'lain', other: 'lain', others: 'lain' };
+/** Any category text -> one of the fixed slugs ("lain" if unknown). */
+function catSlug(x) {
+  const v = String(x ?? '').trim().toLowerCase();
+  return CAT.some((c) => c[0] === v) ? v : CAT_SYN[v] || 'lain';
+}
+const catInfo = (x) => CAT.find((c) => c[0] === catSlug(x));
+const catName = (x) => catInfo(x)[lang === 'en' ? 2 : 1];
+const catChip = (x) => `<span class="cat"><i class="sw" style="background:${catInfo(x)[3]}" aria-hidden="true"></i>${h(catName(x))}</span>`;
+const OTHER_NAMES = ['lain-lain', 'lain lain', 'lainlain', 'lain', 'other', 'others'];
+
+/* ------------------------------------------------------------------ i18n */
+const L = {
+  ringkasan: ['Ringkasan', 'Overview'], ahli: ['Ahli', 'Members'], keluar: ['Duit keluar', 'Spending'],
+  utama: ['Utama', 'Home'], keluarS: ['Keluar', 'Spending'], admin: ['Admin', 'Admin'],
+  year: ['Tahun', 'Year'], heroEyebrow: ['Tabung keluarga', 'Family fund'],
+  heroH1: ['Duit keluarga, <em>telus</em> untuk semua.', 'Family money, <em>open</em> to everyone.'],
+  heroP: ['Setiap ringgit masuk dan keluar direkod di sini. Semua boleh semak, hanya bendahari boleh ubah.',
+          'Every ringgit in and out is recorded here. Everyone can check; only the treasurer can change it.'],
+  perMonth: ['{0} / ahli / bulan', '{0} / member / month'],
+  sendReceipt: ['Hantar resit ke @{0}', 'Send receipts to @{0}'],
+  live: ['LIVE', 'LIVE'], closed: ['DITUTUP', 'CLOSED'],
+  balNow: ['Baki semasa', 'Current balance'], balEnd: ['Baki akhir {0}', 'Closing balance {0}'],
+  updated: ['Dikemaskini {0}', 'Updated {0}'], bf: ['Bawa ke hadapan', 'Brought forward'],
+  inY: ['Masuk {0}', 'In {0}'], outY: ['Keluar {0}', 'Out {0}'],
+  kIn: ['Duit masuk · {0}', 'Money in · {0}'], kOut: ['Duit keluar · {0}', 'Money out · {0}'],
+  kOwe: ['Tertunggak', 'Outstanding'], kOweS: ['{0} ahli belum lunas', '{0} members behind'], kOweNone: ['Semua lunas 🎉', 'All paid up 🎉'],
+  kPaid: ['Ahli aktif lunas', 'Active members paid up'], kPaidS: ['sehingga {0}', 'as of {0}'],
+  kInS: ['bayaran disahkan', 'approved payments'], kOutS: ['{0} perbelanjaan', '{0} expenses'],
+  chartT: ['Masuk vs keluar', 'In vs out'], chartE: ['Bulanan', 'Monthly'], in: ['Masuk', 'In'], out: ['Keluar', 'Out'],
+  recentE: ['Terkini', 'Latest'], recentT: ['Transaksi <span class="em">terkini</span>', '<span class="em">Recent</span> transactions'],
+  noTx: ['Tiada transaksi lagi.', 'No transactions yet.'], payFrom: ['Bayaran {0}', 'Payment from {0}'],
+  giftFrom: ['Sumbangan {0}', 'Contribution from {0}'], otherIn: ['Sumbangan lain', 'Other contribution'],
+  kind: ['Jenis', 'Kind'], kYuran: ['Yuran bulanan', 'Monthly fee'], kSumb: ['Sumbangan lain (bukan yuran)', 'Other contribution (not a fee)'],
+  forMonth: ['Untuk bulan (pilihan)', 'For month (optional)'], forMonthHint: ['Kosong = isi bulan tertunggak paling lama dulu.', 'Empty = fills the oldest owed month first.'],
+  otherOpt: ['— Lain-lain (bukan ahli)', '— Other (not a member)'], otherNeedsSumb: ['"Lain-lain" hanya untuk sumbangan.', '"Other" is only for contributions.'],
+  paidOn: ['dibayar {0}', 'paid {0}'],
+  gridE: ['Status bayaran', 'Payment status'], gridT: ['Siapa dah <span class="em">bayar</span>', 'Who has <span class="em">paid</span>'],
+  member: ['Ahli', 'Member'], paidY: ['Dibayar {0}', 'Paid {0}'], owe: ['Tunggakan', 'Outstanding'],
+  stopped: ['Berhenti', 'Stopped'], stoppedAt: ['Berhenti · {0}', 'Stopped · {0}'], active: ['Aktif', 'Active'],
+  lgPaid: ['Dah bayar', 'Paid'], lgPart: ['Separuh', 'Partial'], lgUnpaid: ['Belum bayar', 'Unpaid'], lgUp: ['Akan datang', 'Upcoming'], lgNone: ['Bukan ahli / berhenti', 'Not a member / stopped'],
+  noMembers: ['Tiada ahli untuk tahun ini.', 'No members this year.'],
+  catE: ['Belanja ikut kategori', 'Spending by category'], catT: ['Ke mana duit <span class="em">pergi</span>', 'Where the money <span class="em">went</span>'],
+  catYear: ['Tahun {0}', 'Year {0}'], catAll: ['Setiap tahun', 'Every year'], catNone: ['Tiada perbelanjaan tahun ini.', 'No spending this year.'],
+  catTable: ['Lihat jadual', 'Show table'], catPick: ['Tekan tahun untuk lihat butiran.', 'Tap a year to see its details.'],
+  spendE: ['Ke mana duit pergi', 'Where the money went'], spendT: ['Duit <span class="em">keluar</span>', '<span class="em">Spending</span>'],
+  date: ['Tarikh', 'Date'], item: ['Perkara', 'Item'], cat: ['Kategori', 'Category'], amount: ['Jumlah', 'Amount'], receipt: ['Resit', 'Receipt'],
+  seeReceipt: ['Lihat resit', 'View receipt'], legacy: ['Rekod lama', 'Old record'], noSpend: ['Tiada perbelanjaan tahun ini.', 'No spending this year.'],
+  total: ['Jumlah', 'Total'],
+  tagline: ['Membina masa depan bersama', 'Building the future together'],
+  footRem: ['Peringatan auto · hari terakhir bulan, 8:00pm', 'Auto reminder · last day of the month, 8:00pm'],
+  footPriv: ['Halaman awam: baca sahaja. No. rujukan & resit bayaran ahli tidak dipaparkan.', 'Public page: read-only. Member payment refs & receipts are not shown.'],
+  demoBar: ['Mod demo — data contoh. Isi CONFIG dalam index.html untuk guna data sebenar.', 'Demo mode — sample data. Fill CONFIG in index.html to use real data.'],
+  loadErr: ['Tak dapat muat data: {0}', 'Could not load data: {0}'],
+  // admin
+  logout: ['Log keluar', 'Log out'], backDash: ['Dashboard', 'Dashboard'],
+  loginE: ['Bendahari sahaja', 'Treasurer only'], loginT: ['Log masuk <span class="em">admin</span>', 'Admin <span class="em">login</span>'],
+  email: ['Emel', 'Email'], password: ['Kata laluan', 'Password'], login: ['Log masuk', 'Log in'],
+  demoLogin: ['Mod demo: masukkan apa-apa emel & kata laluan.', 'Demo mode: enter any email & password.'],
+  notAdmin: ['Akaun ini bukan admin.', 'This account is not the admin.'],
+  pendE: ['Langkah 1', 'Step 1'], pendT: ['Resit <span class="em">menunggu</span>', 'Receipts <span class="em">waiting</span>'],
+  pendNone: ['Tiada resit menunggu. 👍', 'No receipts waiting. 👍'],
+  aiOk: ['Dibaca AI · {0}', 'Read by AI · {0}'], aiBad: ['AI tak dapat baca jumlah', "AI couldn't read amount"],
+  sentBy: ['Dihantar oleh {0}', 'Sent by {0}'], ref: ['Rujukan', 'Ref'], approve: ['Sahkan', 'Approve'], reject: ['Tolak', 'Reject'],
+  approved: ['Disahkan ✓ — ahli dimaklumkan di Telegram.', 'Approved ✓ — members notified on Telegram.'],
+  rejected: ['Ditolak — ahli dimaklumkan.', 'Rejected — members notified.'],
+  demoNoTg: ['(Demo: Telegram tidak dihantar)', '(Demo: Telegram not sent)'],
+  addE: ['Langkah 2', 'Step 2'], addT: ['Tambah <span class="em">rekod</span>', 'Add <span class="em">record</span>'],
+  tabIn: ['Duit masuk', 'Money in'], tabOut: ['Duit keluar', 'Money out'],
+  method: ['Cara', 'Method'], cash: ['Tunai', 'Cash'], transfer: ['Pindahan bank', 'Bank transfer'],
+  inHint: ['Untuk bayaran tunai / tanpa bot. Terus disahkan.', 'For cash / non-bot payments. Approved immediately.'],
+  desc: ['Keterangan', 'Description'], receiptFile: ['Resit (gambar / PDF)', 'Receipt (photo / PDF)'],
+  legacyChk: ['Rekod lama tanpa resit', 'Old record without receipt'],
+  outHint: ['Resit wajib untuk perbelanjaan baru. Resit duit keluar boleh dilihat umum.', 'A receipt is required for new spending. Spending receipts are public.'],
+  save: ['Simpan', 'Save'], saved: ['Disimpan ✓', 'Saved ✓'], uploading: ['Memuat naik resit…', 'Uploading receipt…'],
+  needReceipt: ['Pilih resit atau tanda "rekod lama".', 'Pick a receipt or tick "old record".'],
+  badInput: ['Semak semula maklumat.', 'Please check the details.'],
+  memE: ['Langkah 3', 'Step 3'], memT: ['Ahli & <span class="em">Telegram</span>', 'Members & <span class="em">Telegram</span>'],
+  start: ['Mula', 'Start'], tg: ['Telegram', 'Telegram'], linked: ['Disambung', 'Linked'], notLinked: ['Belum', 'Not yet'], status: ['Status', 'Status'],
+  stopBtn: ['Hentikan sumbangan', 'Stop contributing'], reactBtn: ['Aktifkan semula', 'Reactivate'], unlink: ['Putus Telegram', 'Unlink Telegram'], del: ['Padam', 'Delete'],
+  addMember: ['+ Tambah ahli', '+ Add member'], name: ['Nama', 'Name'], startMonth: ['Bulan mula (bulan pertama perlu bayar)', 'Start month (first month owed)'],
+  linkHint: ['Ahli sambung Telegram: hantar /start ke bot, kemudian anda pilih nama mereka di Telegram.', 'To link Telegram: the member sends /start to the bot, then you pick their name in Telegram.'],
+  confirmDel: ['Padam ahli {0}?', 'Delete member {0}?'], cantDel: ['Tak boleh padam — ahli ini ada rekod bayaran.', "Can't delete — this member has payment records."],
+  confirmUnlink: ['Putuskan Telegram {0}?', 'Unlink Telegram for {0}?'],
+  stopT: ['Hentikan sumbangan · {0}', 'Stop contributing · {0}'], lastMonth: ['Bulan terakhir menyumbang', 'Last month contributing'],
+  reason: ['Sebab (pilihan)', 'Reason (optional)'],
+  stopInfo: ['Yuran selepas bulan ini tidak dikira. Rekod lama kekal. Boleh aktifkan semula bila-bila masa.', 'Fees after this month are not counted. Old records stay. You can reactivate any time.'],
+  oweNow: ['Tunggakan sekarang', 'Outstanding now'], oweAfter: ['Selepas berhenti', 'After stopping'],
+  cancel: ['Batal', 'Cancel'], confirmStop: ['Sahkan berhenti', 'Confirm stop'],
+  reactivated: ['{0} diaktifkan semula. Yuran dikira mula bulan ini.', '{0} reactivated. Fees count from this month.'],
+  impE: ['Langkah 4', 'Step 4'], impT: ['Import <span class="em">rekod lama</span>', 'Import <span class="em">past records</span>'],
+  impS1: ['Muat turun templat', 'Download template'], impS1d: ['Lajur: tarikh, ahli, jenis, jumlah, keterangan, kategori, rujukan, untuk_bulan', 'Columns: tarikh, ahli, jenis, jumlah, keterangan, kategori, rujukan, untuk_bulan'],
+  impS2: ['Muat naik fail', 'Upload file'], impS2d: ['Excel (.xlsx) atau CSV', 'Excel (.xlsx) or CSV'],
+  impS3: ['Semak & import', 'Review & import'], impS3d: ['Lihat tanda setiap baris dulu', 'Check each row’s mark first'],
+  dlTpl: ['Muat turun templat', 'Download template'], chooseFile: ['Pilih fail', 'Choose file'],
+  mOk: ['✓ sah', '✓ valid'], mDup: ['⚠ mungkin pendua', '⚠ possible duplicate'], mLegacy: ['⚠ keluar tanpa resit → rekod lama', '⚠ spending without receipt → old record'],
+  mNoMem: ['✕ ahli tiada', '✕ member not found'], mBad: ['✕ tarikh / jumlah salah', '✕ bad date / amount'],
+  rows: ['{0} baris', '{0} rows'], createMem: ['Cipta ahli baru secara automatik (bulan mula = bayaran pertama)', 'Create unknown members automatically (start = first payment month)'],
+  skipDup: ['Langkau pendua', 'Skip duplicates'], openBal: ['Baki awal sebelum rekod pertama (RM)', 'Opening balance before the first record (RM)'],
+  doImport: ['Import {0} rekod', 'Import {0} records'], importing: ['Sedang import…', 'Importing…'],
+  impDone: ['✓ {0} rekod diimport.', '✓ {0} records imported.'], seeDash: ['Lihat dashboard {0}', 'View dashboard {0}'], impAgain: ['Import fail lain', 'Import another file'],
+  type: ['Jenis', 'Type'], mark: ['Tanda', 'Mark'], willCreate: ['akan dicipta', 'will be created'],
+  noRows: ['Tiada baris data dijumpai dalam fail.', 'No data rows found in the file.'],
+  bakE: ['Langkah 5', 'Step 5'], bakT: ['Backup <span class="em">Google Sheet</span>', '<span class="em">Google Sheet</span> backup'],
+  bakStatus: ['Status', 'Status'], bakActive: ['Aktif', 'Active'], bakOff: ['Belum disambung', 'Not connected'],
+  bakLast: ['Snapshot penuh terakhir', 'Last full snapshot'], bakRt: ['Masa nyata', 'Real-time'], bakRtV: ['setiap perubahan', 'every change'],
+  bakWeekly: ['Salinan mingguan', 'Weekly copies'], bakWeeklyV: ['12 salinan terkini', 'newest 12 copies'],
+  openSheet: ['Buka Google Sheet', 'Open Google Sheet'], backupNow: ['Backup sekarang', 'Back up now'], backingUp: ['Sedang backup…', 'Backing up…'], done: ['Siap ✓', 'Done ✓'],
+  never: ['Belum pernah', 'Never'],
+  setE: ['Langkah 6', 'Step 6'], setT: ['Tetapan & <span class="em">automasi</span>', 'Settings & <span class="em">automation</span>'],
+  fee: ['Yuran bulanan (RM)', 'Monthly fee (RM)'], fundName: ['Nama tabung', 'Fund name'],
+  nextRem: ['Peringatan seterusnya', 'Next reminder'], nextStmt: ['Penyata tahunan seterusnya', 'Next yearly statement'],
+  storage: ['Simpanan resit', 'Receipt storage'], remindNow: ['Hantar peringatan sekarang', 'Send reminder now'], remSent: ['Peringatan dihantar ✓', 'Reminder sent ✓'],
+  stmtV: ['{0}, 9:00am · PDF ke setiap ahli', '{0}, 9:00am · PDF to each member'], remV: ['{0}, 8:00pm', '{0}, 8:00pm'],
+  ok: ['OK', 'OK'], error: ['Ralat: {0}', 'Error: {0}'],
+};
+let lang = 'bm';
+try { lang = localStorage.getItem('tf_lang') === 'en' ? 'en' : 'bm'; } catch (e) { /* storage blocked */ }
+function t(k, ...a) {
+  const v = L[k] ? L[k][lang === 'en' ? 1 : 0] : k;
+  return v.replace(/\{(\d)\}/g, (_, i) => a[i] ?? '');
+}
+const MON = { bm: ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
+const mon = (i) => MON[lang][i];
+
+/* ------------------------------------------------------------------ helpers */
+const $ = (s, r = document) => r.querySelector(s);
+const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = (n) => String(n).padStart(2, '0');
+const r2 = (n) => Math.round(Number(n) * 100) / 100;
+function rm(n) {
+  n = r2(n || 0);
+  const whole = Math.abs(n % 1) < 0.005;
+  return (n < 0 ? '−' : '') + 'RM' + Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 });
+}
+const myt = () => new Date(Date.now() + 8 * 3600e3);           // Malaysia time, read with getUTC*
+const today = () => myt().toISOString().slice(0, 10);
+const curYear = () => myt().getUTCFullYear();
+const NOW = () => { const d = myt(); return d.getUTCFullYear() * 12 + d.getUTCMonth(); };
+const mi = (s) => Number(String(s).slice(0, 4)) * 12 + Number(String(s).slice(5, 7)) - 1;
+const miDate = (i) => `${Math.floor(i / 12)}-${pad((i % 12) + 1)}-01`;
+const miLabel = (i) => `${mon(i % 12)} ${Math.floor(i / 12)}`;
+const fmtDate = (s) => (s ? `${Number(s.slice(8, 10))} ${mon(Number(s.slice(5, 7)) - 1)} ${s.slice(0, 4)}` : '');
+function fmtTime(iso) {
+  if (!iso) return t('never');
+  const d = new Date(new Date(iso).getTime() + 8 * 3600e3);
+  if (isNaN(d)) return iso;
+  const hr = d.getUTCHours(), ap = hr < 12 ? 'am' : 'pm';
+  return `${d.getUTCDate()} ${mon(d.getUTCMonth())} ${d.getUTCFullYear()}, ${hr % 12 || 12}:${pad(d.getUTCMinutes())}${ap}`;
+}
+function toast(msg, ms = 3200) {
+  const el = $('#toast'); el.textContent = msg; el.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), ms);
+}
+function loadScript(src) {
+  return new Promise((ok, bad) => {
+    if (document.querySelector(`script[src="${src}"]`)) return ok();
+    const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => bad(new Error('load ' + src));
+    document.head.appendChild(s);
+  });
+}
+const isUrl = (u) => /^https?:\/\//i.test(u || '') || /^blob:/i.test(u || '');
+
+/* ------------------------------------------------------------------ state */
+const S = { settings: {}, members: [], breaks: [], cashIn: [], cashOut: [], loadedAt: null };
+const UI = { year: curYear(), admin: false, adminOk: false, addTab: 'in', imp: null, impDone: null, busy: {} };
+let sb = null;
+const fee = () => Number(S.settings.monthly_due) || 100;
+const memberById = (id) => S.members.find((m) => m.id === id);
+const approvedIn = () => S.cashIn.filter((p) => p.status === 'approved');
+
+/* ------------------------------------------------------------------ demo data (spec §12) */
+function demoData() {
+  const names = ['Abah', 'Mak', 'Angah', 'Along', 'Achik', 'Adik'];
+  const lastPaid = { Abah: '2026-11', Mak: '2026-11', Angah: '2026-11', Along: '2026-10', Achik: '2026-09', Adik: '2026-08' };
+  const members = names.map((n, i) => ({ id: i + 1, name: n, start_month: '2025-07-01', tg_chat_id: n === 'Adik' ? null : 700000 + i, created_at: '2025-07-01T00:00:00Z' }));
+  const cashIn = []; let id = 1;
+  members.forEach((m, i) => {
+    for (let k = mi('2025-07-01'); k <= mi(lastPaid[m.name] + '-01'); k++) {
+      const y = Math.floor(k / 12), mo = (k % 12) + 1, day = 2 + i;
+      const d = `${y}-${pad(mo)}-${pad(day)}`;
+      cashIn.push({ id: id++, member_id: m.id, paid_on: d, amount: 100, method: 'transfer', ref: y > 2025 ? `DN${String(y).slice(2)}${pad(mo)}${pad(day)}${String(1000 + id).slice(1)}` : null,
+        receipt_url: null, tg_file_uid: null, batch_id: 'b' + id, sent_by: m.id, source: y > 2025 ? 'bot' : 'import', status: 'approved', note: null, payee: null, created_at: d + 'T12:00:00Z' });
+    }
+  });
+  cashIn.push({ id: id++, member_id: 4, paid_on: '2026-11-03', amount: 100, method: 'transfer', ref: 'DN2611030045', receipt_url: 'demo', tg_file_uid: 'f1', batch_id: 'demo-b1', sent_by: 4, source: 'bot', status: 'pending', note: null, payee: 'TABUNG KELUARGA', created_at: '2026-11-03T13:10:00Z' });
+  cashIn.push({ id: id++, member_id: 6, paid_on: '2026-11-04', amount: 100, method: 'transfer', ref: null, receipt_url: 'demo', tg_file_uid: 'f2', batch_id: 'demo-b2', sent_by: 2, source: 'bot', status: 'pending', note: 'AI tak dapat baca jumlah — semak', payee: null, created_at: '2026-11-04T02:20:00Z' });
+  const out = [
+    ['2025-08-22', 'Kenduri kahwin Angah', 'kenduri', 1000, true], ['2025-12-18', 'Bantuan banjir rumah Mak Long', 'kecemasan', 500, true],
+    ['2026-03-07', 'Kenduri arwah Tok Wan', 'kenduri', 850], ['2026-03-15', 'Hamper Raya', 'raya', 600], ['2026-06-09', 'Ubat Mak', 'perubatan', 320],
+    ['2026-08-14', 'Baiki bumbung rumah kampung', 'rumah', 1200], ['2026-11-02', 'Hadiah konvo Adik', 'lain', 150],
+  ];
+  const cashOut = out.map((o, i) => ({ id: i + 1, spent_on: o[0], description: o[1], category: o[2], amount: o[3], legacy: !!o[4], receipt_url: o[4] ? null : 'demo', tg_file_uid: null, source: o[4] ? 'import' : 'bot', created_at: o[0] + 'T10:00:00Z' }));
+  const breaks = [{ id: 1, member_id: 5, from_month: '2026-10-01', to_month: null, reason: 'Sambung belajar', created_at: '2026-10-02T00:00:00Z' }];
+  const at = new Date(); at.setUTCHours(19, 0, 0, 0); if (at > new Date()) at.setUTCDate(at.getUTCDate() - 1); // last 3am MYT
+  const settings = { admin_email: 'bendahari@contoh.my', fund_name: 'TabungFamily', monthly_due: '100', opening_balance: '0', last_backup_at: at.toISOString(), backup_sheet_url: '', backup_hook_url: 'demo', backup_secret: '' };
+  return { settings, members, breaks, cashIn, cashOut };
+}
+
+/* ------------------------------------------------------------------ data access */
+async function fetchAll(q) {
+  const out = []; let from = 0;
+  for (;;) {
+    const { data, error } = await q().range(from, from + 999);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) return out;
+    from += 1000;
+  }
+}
+async function loadData() {
+  if (DEMO) {
+    if (!S.loadedAt) Object.assign(S, /[?&]demo=kosong\b/.test(location.search) ? { settings: { ...demoData().settings, last_backup_at: '' }, members: [], breaks: [], cashIn: [], cashOut: [] } : demoData());
+    S.loadedAt = new Date().toISOString(); return;
+  }
+  const admin = UI.adminOk;
+  const [set, mem, br, cin, cout] = await Promise.all([
+    fetchAll(() => sb.from('settings').select('key,value').order('key')),
+    fetchAll(() => sb.from('members').select(admin ? '*' : 'id,name,start_month').order('id')),
+    fetchAll(() => sb.from('member_breaks').select(admin ? '*' : 'id,member_id,from_month,to_month').order('id')),
+    fetchAll(() => admin ? sb.from('cash_in').select('*').order('id') : sb.from('cash_in').select('id,member_id,paid_on,amount,method,status,kind,for_month').eq('status', 'approved').order('id')),
+    fetchAll(() => sb.from('cash_out').select('*').order('id')),
+  ]);
+  S.settings = Object.fromEntries(set.map((r) => [r.key, r.value]));
+  S.members = mem; S.breaks = br; S.cashIn = cin.map((r) => ({ ...r, amount: Number(r.amount) })); S.cashOut = cout.map((r) => ({ ...r, amount: Number(r.amount) }));
+  S.loadedAt = new Date().toISOString();
+}
+let demoId = 1000;
+const api = {
+  async insert(table, rows) {
+    rows = [].concat(rows);
+    if (DEMO) {
+      const key = { members: 'members', member_breaks: 'breaks', cash_in: 'cashIn', cash_out: 'cashOut' }[table];
+      const made = rows.map((r) => ({ id: ++demoId, created_at: new Date().toISOString(), batch_id: 'demo' + demoId, ...r }));
+      S[key].push(...made); return made;
+    }
+    const out = [];
+    for (let i = 0; i < rows.length; i += 500) {
+      const { data, error } = await sb.from(table).insert(rows.slice(i, i + 500)).select();
+      if (error) throw error;
+      out.push(...data);
+    }
+    return out;
+  },
+  async update(table, id, patch) {
+    if (DEMO) { const key = { members: 'members', member_breaks: 'breaks', cash_in: 'cashIn', cash_out: 'cashOut' }[table]; Object.assign(S[key].find((r) => r.id === id), patch); return; }
+    const { error } = await sb.from(table).update(patch).eq('id', id); if (error) throw error;
+  },
+  async remove(table, id) {
+    if (DEMO) { const key = { members: 'members', member_breaks: 'breaks', cash_in: 'cashIn', cash_out: 'cashOut' }[table]; S[key] = S[key].filter((r) => r.id !== id); return; }
+    const { error } = await sb.from(table).delete().eq('id', id); if (error) throw error;
+  },
+  async settings(obj) {
+    if (DEMO) { Object.assign(S.settings, obj); return; }
+    const { error } = await sb.from('settings').upsert(Object.entries(obj).map(([key, value]) => ({ key, value: String(value) })));
+    if (error) throw error;
+  },
+};
+/** Edge function admin endpoint (keeps Telegram notifications in one place). */
+async function edge(action, body = {}) {
+  if (DEMO) return demoEdge(action, body);
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/tabung?admin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}`, apikey: CONFIG.SUPABASE_ANON_KEY },
+    body: JSON.stringify({ action, ...body }),
+  });
+  const j = await r.json().catch(() => ({ ok: false, error: 'HTTP ' + r.status }));
+  if (!j.ok) throw new Error(j.error || 'HTTP ' + r.status);
+  return j;
+}
+async function demoEdge(action, body) {
+  await new Promise((r) => setTimeout(r, 600));
+  if (action === 'approve' || action === 'reject') {
+    S.cashIn.filter((r) => r.batch_id === body.batch_id && r.status === 'pending').forEach((r) => {
+      if (action === 'approve' && body.amounts?.[r.id] > 0) r.amount = Number(body.amounts[r.id]);
+      r.status = action === 'approve' ? 'approved' : 'rejected';
+    });
+    return { ok: true };
+  }
+  if (action === 'backup') { S.settings.last_backup_at = new Date().toISOString(); return { ok: true, at: S.settings.last_backup_at }; }
+  if (action === 'remind') return { ok: true, sent: true };
+  if (action === 'upload') return { ok: true, url: 'demo' };
+  return { ok: false };
+}
+
+/* ------------------------------------------------------------------ money rules (spec §4) */
+function brks(memberId, extra = []) {
+  return S.breaks.filter((b) => b.member_id === memberId).concat(extra)
+    .map((b) => [mi(b.from_month), b.to_month ? mi(b.to_month) : Infinity]);
+}
+/** Month indexes a member owes, ascending, from start_month up to `upto`, skipping breaks. */
+function dueList(m, upto, extra) {
+  const s = mi(m.start_month), br = brks(m.id, extra), out = [];
+  for (let i = s; i <= upto; i++) if (!br.some(([a, z]) => i >= a && i <= z)) out.push(i);
+  return out;
+}
+const inBreak = (m, i) => brks(m.id).some(([a, z]) => i >= a && i <= z);
+const openBreak = (m) => S.breaks.find((b) => b.member_id === m.id && !b.to_month);
+const isFee = (p) => p.kind !== 'sumbangan';
+/** Monthly fees a member has paid (sumbangan does not pay dues). */
+function paidBy(id, upto) { return approvedIn().filter((p) => p.member_id === id && isFee(p) && (!upto || p.paid_on <= upto)).reduce((s, p) => s + p.amount, 0); }
+/**
+ * How much of each owed month is covered, and when it was paid.
+ * Fees tagged with for_month go to that month; the rest (and anything above the fee) fills the
+ * oldest owed month first (FIFO). Same rule as the Google Sheet backup.
+ */
+function coverage(m, list) {
+  const f = fee(), cov = {}, dates = {}, inList = new Set(list);
+  const add = (i, amt, d) => { cov[i] = (cov[i] || 0) + amt; (dates[i] = dates[i] || []).includes(d) || dates[i].push(d); };
+  const pays = approvedIn().filter((p) => p.member_id === m.id && isFee(p)).sort((a, b) => (a.paid_on < b.paid_on ? -1 : a.paid_on > b.paid_on ? 1 : a.id - b.id));
+  const pool = [];
+  pays.forEach((p) => {
+    const i = p.for_month ? mi(p.for_month) : null;
+    if (i !== null && inList.has(i)) {
+      const put = Math.min(Math.max(0, f - (cov[i] || 0)), p.amount);
+      if (put > 0) add(i, put, p.paid_on);
+      if (p.amount - put > 0.005) pool.push({ amt: p.amount - put, d: p.paid_on });
+    } else pool.push({ amt: p.amount, d: p.paid_on });
+  });
+  let k = 0;
+  for (const x of pool) {
+    let left = x.amt;
+    while (left > 0.005 && k < list.length) {
+      const i = list[k], room = f - (cov[i] || 0);
+      if (room <= 0.005) { k++; continue; }
+      const put = Math.min(room, left);
+      add(i, put, x.d); left -= put;
+    }
+  }
+  return { cov, dates };
+}
+/** Member standing at month index `idx` counting payments up to date `upto` (default: all). */
+function standingAt(m, idx = NOW(), upto) {
+  const due = dueList(m, idx), paid = paidBy(m.id, upto), owed = due.length * fee();
+  const ob = openBreak(m);
+  const stopped = !!ob && mi(ob.from_month) <= idx;
+  return { paid, owed, owe: Math.max(0, r2(owed - paid)), months: Math.ceil(Math.max(0, owed - paid) / fee() - 1e-9), stopped, lastMonth: ob ? mi(ob.from_month) - 1 : null, active: !stopped && mi(m.start_month) <= idx };
+}
+/** Grid status of member m in month i (FIFO: payments fill oldest owed month first). */
+function monthStatus(m, i, c) {
+  if (i < mi(m.start_month) || inBreak(m, i)) return 'none';
+  const covered = c.cov[i] || 0;
+  if (covered >= fee() - 0.005) return 'paid';
+  if (covered > 0.005) return 'part';
+  return i <= NOW() ? 'unpaid' : 'up';
+}
+/** Last month a member is fully covered for (FIFO), or start-1 if none. */
+function lastFullyPaid(m) {
+  const list = dueList(m, NOW() + 240), n = Math.floor((paidBy(m.id) + 0.005) / fee());
+  return n > 0 ? list[Math.min(n, list.length) - 1] : mi(m.start_month) - 1;
+}
+function fundYear(y) {
+  const open = Number(S.settings.opening_balance) || 0, a = `${y}-01-01`, z = `${y}-12-31`;
+  const ins = approvedIn(), outs = S.cashOut;
+  const sum = (arr, f) => arr.filter(f).reduce((s, x) => s + x.amount, 0);
+  const bf = open + sum(ins, (p) => p.paid_on < a) - sum(outs, (o) => o.spent_on < a);
+  const yin = sum(ins, (p) => p.paid_on >= a && p.paid_on <= z), yout = sum(outs, (o) => o.spent_on >= a && o.spent_on <= z);
+  const cur = open + sum(ins, () => true) - sum(outs, () => true);
+  return { bf, yin, yout, close: bf + yin - yout, cur };
+}
+function years() {
+  const ys = new Set([curYear()]);
+  approvedIn().forEach((p) => ys.add(Number(p.paid_on.slice(0, 4))));
+  S.cashOut.forEach((o) => ys.add(Number(o.spent_on.slice(0, 4))));
+  S.members.forEach((m) => ys.add(Number(m.start_month.slice(0, 4))));
+  const arr = [...ys].filter((y) => y <= curYear()).sort();
+  const out = []; for (let y = arr[0]; y <= curYear(); y++) out.push(y);
+  return out;
+}
+
+/* ------------------------------------------------------------------ header / nav */
+const ICON = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.5 5.2"/></svg>',
+  out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+};
+function langToggle() {
+  return `<div class="lang" role="group" aria-label="Bahasa / Language">
+    <button type="button" data-act="lang" data-v="bm" aria-pressed="${lang === 'bm'}">BM</button>
+    <button type="button" data-act="lang" data-v="en" aria-pressed="${lang === 'en'}">EN</button></div>`;
+}
+function renderHeader() {
+  const hdr = $('#hdr'), fn = h(S.settings.fund_name || 'TabungFamily');
+  document.documentElement.lang = lang === 'en' ? 'en' : 'ms';
+  document.title = fn + (UI.admin ? ' · Admin' : '');
+  $('#demoBar').hidden = !DEMO; $('#demoBar').textContent = t('demoBar');
+  if (UI.admin) {
+    hdr.className = 'top adm-top';
+    hdr.innerHTML = `<div class="wrap"><a class="logo" href="#"><img src="logo-mark.png" alt="" width="38" height="38"><span class="hide-m">${fn}</span></a><span class="adm-chip">ADMIN</span>
+      <span class="sp"></span>${langToggle()}<a class="btn sm hide-m" href="#">${t('backDash')}</a>
+      ${UI.adminOk ? `<button type="button" class="btn sm" data-act="logout">${t('logout')}</button>` : ''}</div>`;
+  } else {
+    hdr.className = 'top';
+    hdr.innerHTML = `<div class="wrap"><a class="logo" href="#top"><img src="logo-mark.png" alt="" width="38" height="38">${fn}</a>
+      <nav class="nav" aria-label="Menu"><a href="#top">${t('ringkasan')}</a><a href="#ahli">${t('ahli')}</a><a href="#keluar">${t('keluar')}</a></nav>
+      <span class="sp"></span>${langToggle()}<a class="btn ink hide-m" href="#admin">${ICON.lock.replace('<svg', '<svg width="16" height="16"')}${t('admin')}</a></div>`;
+  }
+  const cur = UI.admin ? 'admin' : (location.hash.slice(1) || 'top');
+  const items = [['top', 'home', t('utama')], ['ahli', 'users', t('ahli')], ['keluar', 'out', t('keluarS')], ['admin', 'lock', t('admin')]];
+  $('#bnav').innerHTML = items.map(([id, ic, lb]) => `<a href="#${id}" ${cur === id ? 'aria-current="page"' : ''}>${ICON[ic]}<span>${lb}</span></a>`).join('');
+}
+
+/* ------------------------------------------------------------------ public dashboard */
+function renderPublic() {
+  const y = UI.year, cur = y === curYear();
+  const F = fundYear(y);
+  const cutIdx = cur ? NOW() : y * 12 + 11, cutDate = cur ? today() : `${y}-12-31`;
+  const kM = cutIdx % 12, mA = `${y}-${pad(kM + 1)}-01`, mZ = `${y}-${pad(kM + 1)}-31`;
+  const kIn = approvedIn().filter((p) => p.paid_on >= mA && p.paid_on <= mZ).reduce((s, p) => s + p.amount, 0);
+  const outsM = S.cashOut.filter((o) => o.spent_on >= mA && o.spent_on <= mZ);
+  const kOut = outsM.reduce((s, o) => s + o.amount, 0);
+  const visible = S.members.filter((m) => {
+    if (mi(m.start_month) > y * 12 + 11) return false;
+    const anyDue = dueList(m, y * 12 + 11).some((i) => Math.floor(i / 12) === y);
+    return anyDue || approvedIn().some((p) => p.member_id === m.id && p.paid_on.startsWith(String(y)));
+  });
+  const st = visible.map((m) => ({ m, ...standingAt(m, cutIdx, cutDate) }));
+  const owing = st.filter((s) => s.owe > 0), oweTotal = owing.reduce((s, x) => s + x.owe, 0);
+  const actives = st.filter((s) => s.active), paidUp = actives.filter((s) => s.owe === 0);
+
+  // monthly bars
+  const mo = Array.from({ length: 12 }, (_, k) => {
+    const a = `${y}-${pad(k + 1)}-01`, z = `${y}-${pad(k + 1)}-31`;
+    return { i: approvedIn().filter((p) => p.paid_on >= a && p.paid_on <= z).reduce((s, p) => s + p.amount, 0),
+             o: S.cashOut.filter((p) => p.spent_on >= a && p.spent_on <= z).reduce((s, p) => s + p.amount, 0) };
+  });
+  const max = Math.max(1, ...mo.map((x) => Math.max(x.i, x.o)));
+
+  // recent
+  const yr = String(y);
+  const tx = approvedIn().filter((p) => p.paid_on.startsWith(yr)).map((p) => ({ d: p.paid_on, id: p.id, k: 'in', a: p.amount, t: p.member_id ? t(isFee(p) ? 'payFrom' : 'giftFrom', memberById(p.member_id)?.name ?? '?') : t('otherIn'), s: p.method === 'cash' ? t('cash') : t('transfer') }))
+    .concat(S.cashOut.filter((o) => o.spent_on.startsWith(yr)).map((o) => ({ d: o.spent_on, id: o.id, k: 'out', a: o.amount, t: o.description, s: catName(o.category) })))
+    .sort((a, b) => (b.d === a.d ? b.id - a.id : b.d < a.d ? -1 : 1)).slice(0, 6);
+
+  const spend = S.cashOut.filter((o) => o.spent_on.startsWith(yr)).sort((a, b) => (a.spent_on < b.spent_on ? 1 : -1));
+  const bot = CONFIG.BOT_USERNAME.replace(/^@/, '');
+
+  $('#app').innerHTML = `<main class="wrap" id="top">
+  <div class="sec-h" style="margin:0">
+    <div class="years" role="group" aria-label="${t('year')}"><span class="eyebrow" style="margin:0 6px 0 0">${t('year')}</span>
+      ${years().map((yy) => `<button type="button" data-act="year" data-v="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join('')}</div>
+  </div>
+  <div class="hero-row">
+    <section class="hero" aria-label="${h(S.settings.fund_name || 'TabungFamily')}">
+      <span class="tilt ${cur ? 'live' : ''}">${cur ? t('live') : t('closed')}</span>
+      <p class="eyebrow">${t('heroEyebrow')} · ${cur ? miLabel(NOW()) : y}</p>
+      <h1>${t('heroH1')}</h1>
+      <p>${t('heroP')}</p>
+      <span class="chip sun">${t('perMonth', rm(fee()))}</span>
+      ${bot ? `<a class="bot" href="https://t.me/${h(bot)}" target="_blank" rel="noopener">✈ ${t('sendReceipt', h(bot))}</a>` : ''}
+    </section>
+    <section class="card bal">
+      <p class="eyebrow">${cur ? t('balNow') : t('balEnd', y)}</p>
+      <div class="big num">${rm(cur ? F.cur : F.close)}</div>
+      <div class="muted small">${t('updated', fmtTime(S.loadedAt))}</div>
+      <div class="tiles">
+        <div class="tile"><span>${t('bf')}</span><b class="num">${rm(F.bf)}</b></div>
+        <div class="tile"><span>${t('inY', y)}</span><b class="num" style="color:var(--blue)">${rm(F.yin)}</b></div>
+        <div class="tile"><span>${t('outY', y)}</span><b class="num" style="color:var(--due-fg)">${rm(F.yout)}</b></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="kpis">
+    <div class="card kpi"><p class="eyebrow">${t('kIn', miLabel(cutIdx))}</p><div class="v num">${rm(kIn)}</div><div class="s">${t('kInS')}</div></div>
+    <div class="card kpi"><p class="eyebrow">${t('kOut', miLabel(cutIdx))}</p><div class="v num">${rm(kOut)}</div><div class="s">${t('kOutS', outsM.length)}</div></div>
+    <div class="card kpi ${oweTotal > 0 ? 'warn' : ''}"><p class="eyebrow">${t('kOwe')}</p><div class="v num">${rm(oweTotal)}</div><div class="s">${owing.length ? t('kOweS', owing.length) : t('kOweNone')}</div></div>
+    <div class="card kpi"><p class="eyebrow">${t('kPaid')}</p><div class="v num">${paidUp.length} / ${actives.length}</div><div class="s">${t('kPaidS', cur ? fmtDate(today()) : `31 ${mon(11)} ${y}`)}</div></div>
+  </div>
+
+  <div class="two sec">
+    <section class="card" aria-labelledby="chT">
+      <div class="sec-h"><div><p class="eyebrow">${t('chartE')} · ${y}</p><h2 id="chT">${t('chartT')}</h2></div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>${t('in')}</span><span><i style="background:var(--amber)"></i>${t('out')}</span></div></div>
+      <div class="bars" role="img" aria-label="${t('chartT')} ${y}">
+        ${mo.map((x, k) => `<div class="m" title="${mon(k)}: ${t('in')} ${rm(x.i)} · ${t('out')} ${rm(x.o)}"><div class="b in" style="height:${(x.i / max) * 100}%"></div><div class="b out" style="height:${(x.o / max) * 100}%"></div></div>`).join('')}
+      </div>
+      <div class="bars-l">${mo.map((_, k) => `<span>${mon(k)}</span>`).join('')}</div>
+    </section>
+    <section class="card" aria-labelledby="rcT">
+      <p class="eyebrow">${t('recentE')} · ${y}</p><h2 id="rcT">${t('recentT')}</h2>
+      ${tx.length ? `<ul class="tx">${tx.map((x) => `<li><span class="ic ${x.k}">${x.k === 'in' ? '+' : '−'}</span>
+        <span class="t"><b>${h(x.t)}</b><span>${fmtDate(x.d)} · ${h(x.s)}</span></span><span class="a ${x.k} num">${x.k === 'in' ? '+' : '−'}${rm(x.a)}</span></li>`).join('')}</ul>`
+        : `<p class="muted">${t('noTx')}</p>`}
+    </section>
+  </div>
+
+  <section class="card sec" id="ahli" aria-labelledby="gT">
+    <div class="sec-h"><div><p class="eyebrow">${t('gridE')} · ${y}</p><h2 id="gT">${t('gridT')}</h2></div>
+      <div class="legend">
+        <span><span class="dot paid" style="width:18px;height:18px;font-size:10px;margin-right:6px;vertical-align:-4px">✓</span>${t('lgPaid')}</span>
+        <span><span class="dot part" style="width:18px;height:18px;margin-right:6px;vertical-align:-4px"></span>${t('lgPart')}</span>
+        <span><span class="dot unpaid" style="width:18px;height:18px;font-size:10px;margin-right:6px;vertical-align:-4px">!</span>${t('lgUnpaid')}</span>
+        <span><span class="dot up" style="width:18px;height:18px;margin-right:6px;vertical-align:-4px"></span>${t('lgUp')}</span>
+        <span><span class="dot none" style="width:18px;height:18px;margin-right:6px;vertical-align:-4px"></span>${t('lgNone')}</span>
+      </div></div>
+    ${visible.length ? `<div class="scroll"><table class="mg"><thead><tr><th>${t('member')}</th>${MON[lang].map((x) => `<th class="c">${x}</th>`).join('')}<th class="r">${t('paidY', y)}</th><th class="r">${t('owe')}</th></tr></thead><tbody>
+    ${st.map((s) => {
+      const m = s.m, c = coverage(m, dueList(m, Math.max(NOW(), y * 12 + 11) + 120));
+      const paidY = approvedIn().filter((p) => p.member_id === m.id && isFee(p) && p.paid_on.startsWith(yr)).reduce((a, p) => a + p.amount, 0);
+      const ob = openBreak(m), stoppedNow = s.stopped;
+      const cells = Array.from({ length: 12 }, (_, k) => {
+        const i = y * 12 + k, stt = monthStatus(m, i, c), ds = (c.dates[i] || []).slice().sort();
+        const sym = { paid: '✓', part: '½', unpaid: '!', up: '', none: '' }[stt];
+        const lb = { paid: t('lgPaid'), part: t('lgPart'), unpaid: t('lgUnpaid'), up: t('lgUp'), none: t('lgNone') }[stt];
+        const when = ds.length && stt !== 'none' ? ' · ' + t('paidOn', ds.map(fmtDate).join(', ')) : '';
+        const last = ds.length && stt !== 'none' ? ds[ds.length - 1] : '';
+        return `<td class="c"><span class="dot ${stt}" title="${mon(k)} ${y}: ${lb}${when}" aria-label="${mon(k)}: ${lb}${when}">${sym}</span>${last ? `<small class="pd">${Number(last.slice(8, 10))}/${Number(last.slice(5, 7))}/${last.slice(2, 4)}</small>` : ''}</td>`;
+      }).join('');
+      const oweCell = stoppedNow && s.owe === 0 ? `<span class="tag grey">${t('stopped')}</span>` : s.owe > 0 ? `<b style="color:var(--due-fg)">${rm(s.owe)}</b>` : rm(0);
+      return `<tr><td class="nm">${h(m.name)}${stoppedNow && ob ? `<small>${t('stoppedAt', miLabel(mi(ob.from_month) - 1))}</small>` : ''}</td>${cells}
+        <td class="r num">${rm(paidY)}</td><td class="r num">${oweCell}</td></tr>`;
+    }).join('')}</tbody></table></div>` : `<p class="muted">${t('noMembers')}</p>`}
+  </section>
+
+${renderCategories(y)}
+
+  <section class="card sec" id="keluar" aria-labelledby="sT">
+    <div class="sec-h"><div><p class="eyebrow">${t('spendE')} · ${y}</p><h2 id="sT">${t('spendT')}</h2></div>
+      <span class="muted small">${t('total')}: <b class="num" style="color:var(--ink)">${rm(F.yout)}</b></span></div>
+    ${spend.length ? `<div class="scroll"><table><thead><tr><th>${t('date')}</th><th>${t('item')}</th><th>${t('cat')}</th><th class="r">${t('amount')}</th><th>${t('receipt')}</th></tr></thead><tbody>
+      ${spend.map((o) => `<tr><td class="num">${fmtDate(o.spent_on)}</td><td style="min-width:160px">${h(o.description)}</td>
+        <td>${catChip(o.category)}</td><td class="r num"><b>${rm(o.amount)}</b></td>
+        <td>${o.receipt_url ? receiptLink(o.receipt_url, t('seeReceipt')) : `<span class="tag grey">${t('legacy')}</span>`}</td></tr>`).join('')}
+    </tbody></table></div>` : `<p class="muted">${t('noSpend')}</p>`}
+  </section>
+
+  <footer class="foot"><span class="brand"><img src="logo-mark.png" alt="" width="30" height="30">${t('tagline')}</span><span>🔔 ${t('footRem')}</span><span>${t('footPriv')}</span></footer>
+</main>`;
+}
+/** Spending by category: the chosen year (bars) and every year (stacked bars), plus a table view. */
+function renderCategories(y) {
+  const yrs = years().filter((yy) => S.cashOut.some((o) => o.spent_on.startsWith(String(yy))));
+  if (!S.cashOut.length) return '';
+  const sumBy = (yy) => { const m = {}; S.cashOut.filter((o) => o.spent_on.startsWith(String(yy))).forEach((o) => { const c = catSlug(o.category); m[c] = (m[c] || 0) + o.amount; }); return m; };
+  const thisY = sumBy(y), yTot = Object.values(thisY).reduce((a, b) => a + b, 0);
+  const rows = CAT.filter((c) => thisY[c[0]]).sort((a, b) => thisY[b[0]] - thisY[a[0]]);
+  const max = Math.max(1, ...rows.map((c) => thisY[c[0]]));
+  const per = yrs.map((yy) => ({ y: yy, m: sumBy(yy) })), pmax = Math.max(1, ...per.map((p) => Object.values(p.m).reduce((a, b) => a + b, 0)));
+  const used = CAT.filter((c) => per.some((p) => p.m[c[0]]));
+  const nm = (c) => c[lang === 'en' ? 2 : 1];
+  return `<section class="card sec" aria-labelledby="cT">
+    <p class="eyebrow">${t('catE')}</p><h2 id="cT">${t('catT')}</h2>
+    <div class="two" style="margin-top:6px">
+      <div><h3 style="margin-top:12px">${t('catYear', y)}</h3>
+        ${rows.length ? `<div class="cbar">${rows.map((c) => { const v = thisY[c[0]];
+          return `<span class="lb"><i class="sw" style="background:${c[3]}" aria-hidden="true"></i>${h(nm(c))}</span>
+            <span class="tr" style="width:${(v / max) * 100}%;background:${c[3]}" title="${h(nm(c))}: ${rm(v)} (${Math.round((v / yTot) * 100)}%)"></span>
+            <span class="v num"><b>${rm(v)}</b><span>${Math.round((v / yTot) * 100)}%</span></span>`; }).join('')}</div>`
+          : `<p class="muted">${t('catNone')}</p>`}
+      </div>
+      <div><h3 style="margin-top:12px">${t('catAll')}</h3>
+        <div class="legend" style="margin-top:10px">${used.map((c) => `<span><i style="background:${c[3]}"></i>${h(nm(c))}</span>`).join('')}</div>
+        <div class="ybars">${per.map((p) => { const tot = Object.values(p.m).reduce((a, b) => a + b, 0);
+          return `<button type="button" class="yr" data-act="year" data-v="${p.y}" aria-current="${p.y === y}">${p.y}</button>
+            <span class="stk" style="width:${(tot / pmax) * 100}%" role="img" aria-label="${p.y}: ${used.filter((c) => p.m[c[0]]).map((c) => `${nm(c)} ${rm(p.m[c[0]])}`).join(', ')}">
+              ${used.filter((c) => p.m[c[0]]).map((c) => `<i style="flex:${p.m[c[0]]};background:${c[3]}" title="${p.y} · ${h(nm(c))}: ${rm(p.m[c[0]])}"></i>`).join('')}</span>
+            <span class="v num">${rm(tot)}</span>`; }).join('')}</div>
+        <p class="small muted" style="margin:8px 0 0">${t('catPick')}</p>
+      </div>
+    </div>
+    <details class="tv"><summary>${t('catTable')}</summary><div class="scroll"><table><thead><tr><th>${t('cat')}</th>${per.map((p) => `<th class="r">${p.y}</th>`).join('')}</tr></thead><tbody>
+      ${used.map((c) => `<tr><td>${catChip(c[0])}</td>${per.map((p) => `<td class="r num">${p.m[c[0]] ? rm(p.m[c[0]]) : '—'}</td>`).join('')}</tr>`).join('')}
+      <tr><td><b>${t('total')}</b></td>${per.map((p) => `<td class="r num"><b>${rm(Object.values(p.m).reduce((a, b) => a + b, 0))}</b></td>`).join('')}</tr>
+    </tbody></table></div></details>
+  </section>`;
+}
+function receiptLink(url, label) {
+  if (isUrl(url)) return `<a href="${h(url)}" target="_blank" rel="noopener">${label} ↗</a>`;
+  return `<button type="button" class="linkbtn" data-act="demoReceipt">${label} ↗</button>`;
+}
+
+/* ------------------------------------------------------------------ admin */
+function renderLogin(err = '') {
+  $('#app').innerHTML = `<main class="wrap"><form class="card login" id="loginForm">
+    <img class="login-logo" src="logo.jpg" alt="tabungFAMILY — Membina masa depan bersama" width="640" height="587">
+    <p class="eyebrow">${t('loginE')}</p><h2>${t('loginT')}</h2>
+    ${DEMO ? `<p class="info">${t('demoLogin')}</p>` : ''}
+    <label class="f" for="lgE">${t('email')}</label><input class="in-f" id="lgE" type="email" autocomplete="username" required>
+    <label class="f" for="lgP">${t('password')}</label><input class="in-f" id="lgP" type="password" autocomplete="current-password" required>
+    ${err ? `<p class="err" role="alert">${h(err)}</p>` : ''}
+    <div class="acts"><button class="btn pri" type="submit" style="flex:1">${t('login')}</button></div></form></main>`;
+}
+function nextReminder() {
+  const d = myt(), y = d.getUTCFullYear(), m = d.getUTCMonth();
+  let last = new Date(Date.UTC(y, m + 1, 0));
+  if (d.getUTCDate() === last.getUTCDate() && d.getUTCHours() >= 20) last = new Date(Date.UTC(y, m + 2, 0));
+  return last.toISOString().slice(0, 10);
+}
+function renderAdmin() {
+  const pend = S.cashIn.filter((r) => r.status === 'pending');
+  const batches = [...new Set(pend.map((r) => r.batch_id))].map((b) => pend.filter((r) => r.batch_id === b));
+  const imp = UI.imp;
+  $('#app').innerHTML = `<main class="wrap"><div class="adm-grid">
+
+  <section class="card full" aria-labelledby="pT">
+    <div class="sec-h"><div><p class="eyebrow">${t('pendE')}</p><h2 id="pT">${t('pendT')} <span class="tag warn" style="vertical-align:4px">${batches.length}</span></h2></div></div>
+    ${batches.length ? batches.map((rows) => {
+      const r0 = rows[0], ai = /AI tak dapat/i.test(r0.note || '');
+      const sender = memberById(r0.sent_by), other = sender && rows.some((r) => r.member_id !== r0.sent_by);
+      const thumb = isUrl(r0.receipt_url) ? `<a class="thumb" href="${h(r0.receipt_url)}" target="_blank" rel="noopener">🧾<br>${t('seeReceipt')}</a>` : r0.receipt_url ? `<button type="button" class="thumb" style="border:0;cursor:pointer" data-act="demoReceipt">🧾<br>${t('seeReceipt')}</button>` : `<span class="thumb">—</span>`;
+      return `<div class="batch" data-batch="${h(r0.batch_id)}">${thumb}<div>
+        ${rows.map((r) => `<div class="prow"><b>${h(memberById(r.member_id)?.name ?? '?')}</b>
+          <label class="amt"><span>RM</span><input type="number" min="0.01" step="0.01" inputmode="decimal" value="${r.amount}" data-row="${r.id}" aria-label="${t('amount')} ${h(memberById(r.member_id)?.name ?? '')}"></label></div>`).join('')}
+        <div class="prow small muted">${fmtDate(r0.paid_on)} · ${t('ref')}: ${h(r0.ref || '—')}</div>
+        <div class="prow">${ai ? `<span class="tag warn">⚠ ${t('aiBad')}</span>` : `<span class="tag ok">✓ ${t('aiOk', h(r0.payee || '—'))}</span>`}
+          ${other ? `<span class="tag blue">${t('sentBy', h(sender.name))}</span>` : ''}</div>
+        ${r0.note && !ai ? `<div class="small muted">${h(r0.note)}</div>` : ''}
+        <div class="acts"><button type="button" class="btn danger" data-act="decide" data-v="reject">❌ ${t('reject')}</button>
+          <button type="button" class="btn ok" data-act="decide" data-v="approve">✅ ${t('approve')}</button></div>
+      </div></div>`;
+    }).join('') : `<p class="muted">${t('pendNone')}</p>`}
+  </section>
+
+  <section class="card" aria-labelledby="aT">
+    <p class="eyebrow">${t('addE')}</p><h2 id="aT">${t('addT')}</h2>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="${UI.addTab === 'in'}" data-act="addTab" data-v="in">${t('tabIn')}</button>
+      <button type="button" role="tab" aria-selected="${UI.addTab === 'out'}" data-act="addTab" data-v="out">${t('tabOut')}</button></div>
+    ${UI.addTab === 'in' ? `<form id="fIn">
+      <p class="small muted" style="margin:10px 0 0">${t('inHint')}</p>
+      <label class="f" for="iM">${t('member')}</label><select class="in-f" id="iM" required>${S.members.map((m) => `<option value="${m.id}">${h(m.name)}</option>`).join('')}<option value="0">${t('otherOpt')}</option></select>
+      <div class="row2"><div><label class="f" for="iK">${t('kind')}</label><select class="in-f" id="iK"><option value="yuran">${t('kYuran')}</option><option value="sumbangan">${t('kSumb')}</option></select></div>
+        <div><label class="f" for="iF">${t('forMonth')}</label><input class="in-f" id="iF" type="month" aria-describedby="iFh"></div></div>
+      <p class="small muted" id="iFh" style="margin:4px 0 0">${t('forMonthHint')}</p>
+      <div class="row2"><div><label class="f" for="iD">${t('date')}</label><input class="in-f" id="iD" type="date" value="${today()}" required></div>
+        <div><label class="f" for="iA">${t('amount')} (RM)</label><input class="in-f" id="iA" type="number" min="0.01" step="0.01" inputmode="decimal" value="${fee()}" required></div></div>
+      <label class="f" for="iC">${t('method')}</label><select class="in-f" id="iC"><option value="cash">${t('cash')}</option><option value="transfer">${t('transfer')}</option></select>
+      <div class="acts"><button class="btn pri" type="submit">${t('save')}</button></div></form>`
+    : `<form id="fOut">
+      <p class="small muted" style="margin:10px 0 0">${t('outHint')}</p>
+      <label class="f" for="oD">${t('desc')}</label><input class="in-f" id="oD" required maxlength="200">
+      <div class="row2"><div><label class="f" for="oC">${t('cat')}</label><select class="in-f" id="oC">${CAT.map((c) => `<option value="${c[0]}">${h(c[lang === 'en' ? 2 : 1])}</option>`).join('')}</select></div>
+        <div><label class="f" for="oA">${t('amount')} (RM)</label><input class="in-f" id="oA" type="number" min="0.01" step="0.01" inputmode="decimal" required></div></div>
+      <label class="f" for="oT">${t('date')}</label><input class="in-f" id="oT" type="date" value="${today()}" required>
+      <label class="f" for="oF">${t('receiptFile')}</label><input class="in-f" id="oF" type="file" accept="image/*,application/pdf" style="padding-top:9px">
+      <label class="chk"><input type="checkbox" id="oL"> ${t('legacyChk')}</label>
+      <p class="err" id="oErr" hidden></p>
+      <div class="acts"><button class="btn pri" type="submit">${t('save')}</button></div></form>`}
+  </section>
+
+  <section class="card" aria-labelledby="bT">
+    <p class="eyebrow">${t('bakE')}</p><h2 id="bT">${t('bakT')}</h2>
+    <div style="margin-top:12px">
+      <div class="kv"><span>${t('bakStatus')}</span>${S.settings.backup_hook_url ? `<span class="tag ok">● ${t('bakActive')}</span>` : `<span class="tag grey">${t('bakOff')}</span>`}</div>
+      <div class="kv"><span>${t('bakLast')}</span><b>${fmtTime(S.settings.last_backup_at)}</b></div>
+      <div class="kv"><span>${t('bakRt')}</span><b>${t('bakRtV')}</b></div>
+      <div class="kv"><span>${t('bakWeekly')}</span><b>${t('bakWeeklyV')}</b></div>
+    </div>
+    <div class="acts">${isUrl(S.settings.backup_sheet_url) ? `<a class="btn" href="${h(S.settings.backup_sheet_url)}" target="_blank" rel="noopener">${t('openSheet')} ↗</a>` : `<button type="button" class="btn" disabled>${t('openSheet')}</button>`}
+      <button type="button" class="btn pri" data-act="backup" ${UI.busy.backup ? 'disabled' : ''}>${UI.busy.backup === 'done' ? t('done') : UI.busy.backup ? t('backingUp') : t('backupNow')}</button></div>
+  </section>
+
+  <section class="card full" aria-labelledby="mT">
+    <div class="sec-h"><div><p class="eyebrow">${t('memE')}</p><h2 id="mT">${t('memT')}</h2></div></div>
+    <div class="scroll"><table><thead><tr><th>${t('name')}</th><th>${t('start')}</th><th>${t('tg')}</th><th class="r">${t('owe')}</th><th>${t('status')}</th><th></th></tr></thead><tbody>
+    ${S.members.map((m) => {
+      const s = standingAt(m), ob = openBreak(m);
+      const hasPay = S.cashIn.some((p) => p.member_id === m.id || p.sent_by === m.id);
+      return `<tr><td><b>${h(m.name)}</b></td><td class="num">${miLabel(mi(m.start_month))}</td>
+        <td>${m.tg_chat_id ? `<span class="tag ok">✓ ${t('linked')}</span>` : `<span class="tag grey">${t('notLinked')}</span>`}</td>
+        <td class="r num">${s.owe > 0 ? `<b style="color:var(--due-fg)">${rm(s.owe)}</b>` : rm(0)}</td>
+        <td>${ob ? `<span class="tag grey">${t('stoppedAt', miLabel(mi(ob.from_month) - 1))}</span>` : `<span class="tag blue">${t('active')}</span>`}</td>
+        <td style="white-space:nowrap">${ob ? `<button type="button" class="btn sm" data-act="react" data-v="${m.id}">${t('reactBtn')}</button>` : `<button type="button" class="btn sm" data-act="stop" data-v="${m.id}">${t('stopBtn')}</button>`}
+          ${m.tg_chat_id ? `<button type="button" class="btn sm" data-act="unlink" data-v="${m.id}">${t('unlink')}</button>` : ''}
+          ${hasPay ? '' : `<button type="button" class="btn sm danger" data-act="delMember" data-v="${m.id}">${t('del')}</button>`}</td></tr>`;
+    }).join('')}</tbody></table></div>
+    <form id="fMem" class="row2" style="align-items:end;margin-top:10px">
+      <div><label class="f" for="nN">${t('name')}</label><input class="in-f" id="nN" required maxlength="60"></div>
+      <div><label class="f" for="nS">${t('startMonth')}</label><input class="in-f" id="nS" type="month" value="${miDate(NOW()).slice(0, 7)}" required></div>
+      <div><button class="btn pri" type="submit">${t('addMember')}</button></div>
+    </form>
+    <p class="small muted">${t('linkHint')}</p>
+  </section>
+
+  <section class="card full" aria-labelledby="iT">
+    <p class="eyebrow">${t('impE')}</p><h2 id="iT">${t('impT')}</h2>
+    ${renderImport(imp)}
+  </section>
+
+  <section class="card full" aria-labelledby="sT2">
+    <p class="eyebrow">${t('setE')}</p><h2 id="sT2">${t('setT')}</h2>
+    <div class="row2">
+      <form id="fSet">
+        <label class="f" for="sF">${t('fee')}</label><input class="in-f" id="sF" type="number" min="1" step="1" value="${h(S.settings.monthly_due ?? 100)}" required>
+        <label class="f" for="sN">${t('fundName')}</label><input class="in-f" id="sN" value="${h(S.settings.fund_name ?? '')}" required maxlength="60">
+        <label class="f" for="sO">${t('openBal')}</label><input class="in-f" id="sO" type="number" step="0.01" value="${h(S.settings.opening_balance ?? 0)}">
+        <div class="acts"><button class="btn pri" type="submit">${t('save')}</button></div>
+      </form>
+      <div>
+        <div class="info" style="margin-top:34px">
+          <div class="kv"><span>${t('nextRem')}</span><b>${t('remV', fmtDate(nextReminder()))}</b></div>
+          <div class="kv"><span>${t('nextStmt')}</span><b>${t('stmtV', fmtDate(`${curYear() + 1}-01-01`))}</b></div>
+          <div class="kv"><span>${t('storage')}</span><b>Google Drive</b></div>
+        </div>
+        <div class="acts"><button type="button" class="btn ink" data-act="remind" ${UI.busy.remind ? 'disabled' : ''}>🔔 ${t('remindNow')}</button></div>
+      </div>
+    </div>
+  </section>
+</div></main>`;
+}
+
+/* ------------------------------------------------------------------ import (spec §9.4) */
+const HEAD = {
+  tarikh: ['tarikh', 'date', 'paid_on', 'spent_on', 'tarikhbayar'], ahli: ['ahli', 'nama', 'member', 'name', 'membername'],
+  jenis: ['jenis', 'type'], jumlah: ['jumlah', 'amount', 'amaun', 'rm'], keterangan: ['keterangan', 'description', 'note', 'nota', 'catatan', 'perkara'],
+  kategori: ['kategori', 'category'], rujukan: ['rujukan', 'ref', 'reference', 'norujukan'], status: ['status'], resit: ['resit', 'receipt', 'receipturl'], cara: ['cara', 'method'], untuk: ['untukbulan', 'formonth', 'bulan', 'month', 'bulanyuran'],
+};
+const normH = (s) => String(s ?? '').toLowerCase().replace(/[\s_.\-()]/g, '');
+function parseCSV(text) {
+  const rows = []; let row = [], f = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; continue; }
+    if (c === '"') q = true; else if (c === ',' || c === ';' || c === '\t') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+function parseDate(v) {
+  if (v instanceof Date && !isNaN(v)) { const d = new Date(v.getTime() + 12 * 3600e3); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  if (typeof v === 'number' && v > 20000 && v < 80000) return new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5).toISOString().slice(0, 10);
+  const s = String(v ?? '').trim(); let y, m, d, x;
+  if ((x = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) [, y, m, d] = x;
+  else if ((x = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) [, d, m, y] = x;
+  else if (/^\d{5}(\.\d+)?$/.test(s)) return parseDate(Number(s));
+  else return null;
+  const dt = new Date(Date.UTC(+y, +m - 1, +d));
+  if (dt.getUTCMonth() !== +m - 1 || dt.getUTCDate() !== +d || +y < 2000 || +y > 2100) return null;
+  return dt.toISOString().slice(0, 10);
+}
+/** "2024-03", "03/2024", "Mac 2024" or a date -> "YYYY-MM-01" (null if empty / unreadable). */
+function parseMonth(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const s = String(v).trim(); let x;
+  if ((x = s.match(/^(\d{4})-(\d{1,2})$/))) return `${x[1]}-${pad(x[2])}-01`;
+  if ((x = s.match(/^(\d{1,2})[\/\-](\d{4})$/))) return `${x[2]}-${pad(x[1])}-01`;
+  const names = [MON.bm, MON.en].map((a) => a.map((n) => n.toLowerCase()));
+  if ((x = s.toLowerCase().match(/^([a-z]{3})[a-z]*\.?\s+(\d{4})$/))) {
+    const k = names.map((a) => a.indexOf(x[1])).find((k) => k >= 0);
+    if (k !== undefined) return `${x[2]}-${pad(k + 1)}-01`;
+  }
+  const d = parseDate(v);
+  return d ? d.slice(0, 8) + '01' : null;
+}
+function parseAmount(v) {
+  if (typeof v === 'number') return v > 0 ? r2(v) : null;
+  const n = Number(String(v ?? '').replace(/rm/ig, '').replace(/[,\s]/g, ''));
+  return n > 0 && isFinite(n) ? r2(n) : null;
+}
+async function readImportFile(file) {
+  let grid;
+  if (/\.csv$|\.txt$/i.test(file.name) || file.type === 'text/csv') grid = parseCSV(await file.text());
+  else {
+    await loadScript(XLSX_JS);
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+    grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' });
+  }
+  grid = grid.filter((r) => r.some((c) => String(c ?? '').trim() !== ''));
+  if (!grid.length) return { name: file.name, rows: [] };
+  const head = grid[0].map(normH), col = {};
+  for (const [k, syn] of Object.entries(HEAD)) { const i = head.findIndex((x) => syn.includes(x)); if (i >= 0) col[k] = i; }
+  const get = (r, k) => (col[k] === undefined ? '' : r[col[k]]);
+  const raw = [];
+  grid.slice(1).forEach((r, n) => {
+    const st = String(get(r, 'status')).trim().toLowerCase();
+    if (col.status !== undefined && st && st !== 'approved') return; // skip pending / rejected
+    raw.push({ n: n + 2, date: parseDate(get(r, 'tarikh')), member: String(get(r, 'ahli')).trim(), jenis: String(get(r, 'jenis')).trim().toLowerCase(),
+      amount: parseAmount(get(r, 'jumlah')), desc: String(get(r, 'keterangan')).trim(), cat: String(get(r, 'kategori')).trim().toLowerCase(),
+      ref: String(get(r, 'rujukan')).trim(), receipt: String(get(r, 'resit')).trim(), cara: String(get(r, 'cara')).trim().toLowerCase(),
+      catRaw: String(get(r, 'kategori')).trim(), forMonth: parseMonth(get(r, 'untuk')) });
+  });
+  return { name: file.name, rows: raw };
+}
+function markImport(imp) {
+  const byName = new Map(S.members.map((m) => [m.name.toLowerCase(), m]));
+  const inKey = (name, date, amt, fm) => `${name}|${date}|${r2(amt)}|${fm || ''}`;
+  const seenIn = new Set(S.cashIn.filter((p) => p.status !== 'rejected').map((p) => inKey((memberById(p.member_id)?.name ?? '').toLowerCase(), p.paid_on, p.amount, p.for_month)));
+  const seenOut = new Set(S.cashOut.map((o) => `${o.spent_on}|${r2(o.amount)}|${o.description.trim().toLowerCase()}`));
+  imp.rows.forEach((r) => {
+    r.type = /^(masuk|in|cash ?in|bayar)/.test(r.jenis) ? 'in' : /^(keluar|out|cash ?out|belanja)/.test(r.jenis) ? 'out' : (r.member ? 'in' : '');
+    r.other = r.type === 'in' && OTHER_NAMES.includes(r.member.toLowerCase());
+    r.kind = r.type === 'in' && (r.other || /sumbangan|derma|lain/.test(r.cat)) ? 'sumbangan' : 'yuran';
+    r.m = r.other ? null : byName.get(r.member.toLowerCase()) || null;
+    if (!r.date || !r.amount || !r.type) r.mark = 'bad';
+    else if (r.type === 'in' && !r.member) r.mark = 'bad';
+    else if (r.type === 'in') {
+      const k = inKey(r.other ? '' : r.member.toLowerCase(), r.date, r.amount, r.kind === 'yuran' ? r.forMonth : null);
+      r.mark = seenIn.has(k) ? 'dup' : r.m || r.other ? 'ok' : 'nomem';
+      seenIn.add(k);
+    } else {
+      const k = `${r.date}|${r.amount}|${(r.desc || r.cat || '').toLowerCase()}`;
+      r.mark = seenOut.has(k) ? 'dup' : isUrl(r.receipt) ? 'ok' : 'legacy';
+      seenOut.add(k);
+    }
+  });
+  imp.counts = { ok: 0, dup: 0, legacy: 0, nomem: 0, bad: 0 };
+  imp.rows.forEach((r) => imp.counts[r.mark]++);
+}
+const importable = (imp) => imp.rows.filter((r) => r.mark === 'ok' || r.mark === 'legacy' || (r.mark === 'dup' && !imp.skipDup) || (r.mark === 'nomem' && imp.create));
+function renderImport(imp) {
+  if (UI.impDone) return `<div class="banner" style="margin-top:14px" role="status">${t('impDone', UI.impDone.n)}
+      <a class="btn sm" href="#" data-act="seeYear" data-v="${UI.impDone.year}">${t('seeDash', UI.impDone.year)}</a>
+      <button type="button" class="btn sm" data-act="impAgain">${t('impAgain')}</button></div>`;
+  const step = imp ? 3 : 1;
+  const MK = { ok: ['mark-ok', t('mOk')], dup: ['mark-w', t('mDup')], legacy: ['mark-w', t('mLegacy')], nomem: ['mark-x', t('mNoMem')], bad: ['mark-x', t('mBad')] };
+  let html = `<div class="steps">
+    <div class="step ${step === 1 ? 'on' : ''}"><div class="n">1</div><b>${t('impS1')}</b><p class="small muted" style="margin:4px 0 10px">${t('impS1d')}</p><button type="button" class="btn sm" data-act="tpl">⬇ ${t('dlTpl')}</button></div>
+    <div class="step ${step === 1 ? 'on' : ''}"><div class="n">2</div><b>${t('impS2')}</b><p class="small muted" style="margin:4px 0 10px">${t('impS2d')}</p>
+      <label class="btn sm" style="position:relative">${t('chooseFile')}<input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="${t('impS2')}"></label></div>
+    <div class="step ${step === 3 ? 'on' : ''}"><div class="n">3</div><b>${t('impS3')}</b><p class="small muted" style="margin:4px 0 0">${t('impS3d')}</p></div></div>`;
+  if (!imp) return html;
+  if (!imp.rows.length) return html + `<p class="err">${h(imp.name)}: ${t('noRows')}</p>`;
+  const n = importable(imp).length;
+  html += `<div style="margin-top:16px"><b>📄 ${h(imp.name)}</b> · <span class="muted">${t('rows', imp.rows.length)}</span>
+    <div class="counts">${Object.entries(imp.counts).filter(([, v]) => v).map(([k, v]) => `<span class="tag ${k === 'ok' ? 'ok' : k === 'bad' || k === 'nomem' ? 'grey' : 'warn'}">${MK[k][1]}: ${v}</span>`).join('')}</div>
+    <div class="scroll" style="max-height:340px;overflow-y:auto"><table><thead><tr><th>#</th><th>${t('date')}</th><th>${t('member')}</th><th>${t('type')}</th><th class="r">${t('amount')}</th><th>${t('desc')}</th><th>${t('mark')}</th></tr></thead><tbody>
+    ${imp.rows.map((r) => `<tr><td class="muted">${r.n}</td><td class="num">${r.date ? fmtDate(r.date) : '<span class="mark-x">?</span>'}</td><td>${h(r.member || '—')}</td>
+      <td>${r.type === 'in' ? t('in') : r.type === 'out' ? t('out') : '?'}</td><td class="r num">${r.amount ? rm(r.amount) : '<span class="mark-x">?</span>'}</td>
+      <td style="min-width:140px">${h(r.desc || r.cat || '')}</td><td class="${MK[r.mark][0]}" style="white-space:nowrap">${MK[r.mark][1]}${r.mark === 'nomem' && imp.create ? ` · ${t('willCreate')}` : ''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <label class="chk"><input type="checkbox" data-act="impOpt" data-v="create" ${imp.create ? 'checked' : ''}> ${t('createMem')}</label>
+    <label class="chk"><input type="checkbox" data-act="impOpt" data-v="skipDup" ${imp.skipDup ? 'checked' : ''}> ${t('skipDup')}</label>
+    <label class="f" for="impOpen">${t('openBal')}</label><input class="in-f" id="impOpen" type="number" step="0.01" value="${h(imp.open)}" style="max-width:240px">
+    <div class="acts"><button type="button" class="btn pri" data-act="doImport" ${n && !UI.busy.imp ? '' : 'disabled'}>${UI.busy.imp ? t('importing') : t('doImport', n)}</button>
+      <button type="button" class="btn" data-act="impAgain">${t('cancel')}</button></div></div>`;
+  return html;
+}
+function templateCSV() {
+  return 'tarikh,ahli,jenis,jumlah,keterangan,kategori,rujukan,untuk_bulan\n' +
+    '05/07/2025,Abah,masuk,100,Yuran Julai,yuran,DN2507050001,2025-07\n' +
+    '6/7/2025,Mak,masuk,RM100.00,Yuran Julai,yuran,,2025-07\n' +
+    '2025-08-05,Abah,in,200,Yuran Ogos & Sep (kosongkan untuk_bulan = isi bulan tertunggak dulu),yuran,,\n' +
+    '01/09/2025,Lain-lain,masuk,54,Duit pecah tabung,sumbangan,,\n' +
+    '22/08/2025,,keluar,"1,000",Kenduri kahwin Angah,kenduri,,\n' +
+    '18-12-2025,,out,RM 500,Bantuan banjir rumah Mak Long,kecemasan,,\n';
+}
+async function doImport() {
+  const imp = UI.imp, rows = importable(imp);
+  UI.busy.imp = true; render();
+  try {
+    const open = imp.open === '' ? null : Number(imp.open);
+    if (open !== null && isFinite(open) && String(open) !== String(Number(S.settings.opening_balance || 0))) await api.settings({ opening_balance: open });
+    // 1) members
+    const newNames = new Map();
+    rows.filter((r) => r.type === 'in' && !r.m && !r.other).forEach((r) => {
+      // start month = first monthly fee; a member with only contributions starts at their first one
+      const k = r.member.toLowerCase(), fee1 = r.kind === 'yuran', first = fee1 && r.forMonth ? r.forMonth : r.date, cur = newNames.get(k);
+      if (!cur || (fee1 && !cur.fee) || (fee1 === cur.fee && first < cur.date)) newNames.set(k, { name: r.member, date: first, fee: fee1 });
+    });
+    if (newNames.size) {
+      const made = await api.insert('members', [...newNames.values()].map((x) => ({ name: x.name, start_month: x.date.slice(0, 8) + '01' })));
+      made.forEach((m) => rows.forEach((r) => { if (r.type === 'in' && r.member.toLowerCase() === m.name.toLowerCase()) r.m = m; }));
+    }
+    // 2) cash in
+    const ins = rows.filter((r) => r.type === 'in' && (r.m || r.other)).map((r) => ({ member_id: r.m ? r.m.id : null, paid_on: r.date, amount: r.amount, method: /tunai|cash/.test(r.cara) ? 'cash' : 'transfer',
+      ref: r.ref || null, sent_by: r.m ? r.m.id : null, source: 'import', status: 'approved', note: r.desc || null, kind: r.kind, for_month: r.kind === 'yuran' ? r.forMonth : null }));
+    if (ins.length) await api.insert('cash_in', ins);
+    // 3) cash out
+    const outs = rows.filter((r) => r.type === 'out').map((r) => ({ spent_on: r.date, description: r.desc || r.cat || 'Rekod lama', category: catSlug(r.catRaw),
+      amount: r.amount, receipt_url: isUrl(r.receipt) ? r.receipt : null, legacy: !isUrl(r.receipt), source: 'import' }));
+    if (outs.length) await api.insert('cash_out', outs);
+    const yrs = rows.map((r) => Number(r.date.slice(0, 4)));
+    UI.impDone = { n: ins.length + outs.length, year: Math.max(...yrs) };
+    UI.imp = null;
+    await loadData();
+  } catch (e) { toast(t('error', e.message || e), 6000); }
+  UI.busy.imp = false; render();
+}
+
+/* ------------------------------------------------------------------ stop dialog */
+function openStop(m) {
+  const dlg = $('#dlg'), def = lastFullyPaid(m), nowOwe = standingAt(m).owe;
+  const minV = miDate(mi(m.start_month) - 1).slice(0, 7);
+  dlg.innerHTML = `<form class="card" method="dialog" id="fStop">
+    <p class="eyebrow">${t('stopBtn')}</p><h2>${t('stopT', h(m.name))}</h2>
+    <label class="f" for="stM">${t('lastMonth')}</label><input class="in-f" id="stM" type="month" min="${minV}" value="${miDate(def).slice(0, 7)}" required>
+    <label class="f" for="stR">${t('reason')}</label><input class="in-f" id="stR" maxlength="120">
+    <p class="info">ℹ️ ${t('stopInfo')}</p>
+    <div class="cmp"><div><span class="small muted">${t('oweNow')}</span><b class="num" style="color:var(--due-fg)">${rm(nowOwe)}</b></div>
+      <div><span class="small muted">${t('oweAfter')}</span><b class="num" id="stAfter">—</b></div></div>
+    <div class="acts" style="justify-content:flex-end"><button type="button" class="btn" data-act="dlgClose">${t('cancel')}</button><button type="submit" class="btn pri">${t('confirmStop')}</button></div></form>`;
+  const calc = () => {
+    const v = $('#stM').value; if (!v) return;
+    const last = mi(v + '-01'), extra = [{ member_id: m.id, from_month: miDate(last + 1), to_month: null }];
+    const owed = dueList(m, NOW(), extra).length * fee();
+    $('#stAfter').textContent = rm(Math.max(0, owed - paidBy(m.id)));
+  };
+  $('#stM').addEventListener('input', calc); calc();
+  $('#fStop').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const v = $('#stM').value; if (!v) return;
+    try {
+      await api.insert('member_breaks', { member_id: m.id, from_month: miDate(mi(v + '-01') + 1), to_month: null, reason: $('#stR').value.trim() || null });
+      dlg.close(); await refresh();
+    } catch (err) { toast(t('error', err.message || err), 6000); }
+  });
+  dlg.showModal();
+}
+
+/* ------------------------------------------------------------------ actions */
+async function refresh() { try { await loadData(); } catch (e) { toast(t('loadErr', e.message || e), 6000); } render(); }
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const fileB64 = (file) => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = bad; r.readAsDataURL(file); });
+
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-act]'); if (!el || el.tagName === 'INPUT') return;
+  const act = el.dataset.act, v = el.dataset.v;
+  if (act === 'lang') { lang = v; try { localStorage.setItem('tf_lang', v); } catch (_) { /* ignore */ } render(); }
+  else if (act === 'year') { UI.year = Number(v); render(); }
+  else if (act === 'demoReceipt') toast('Demo: resit disimpan di Google Drive dalam sistem sebenar.');
+  else if (act === 'logout') { if (sb) await sb.auth.signOut(); UI.adminOk = false; await refresh(); }
+  else if (act === 'addTab') { UI.addTab = v; render(); }
+  else if (act === 'decide') {
+    const card = el.closest('[data-batch]'), batch_id = card.dataset.batch, amounts = {};
+    card.querySelectorAll('input[data-row]').forEach((i) => { if (Number(i.value) > 0) amounts[i.dataset.row] = Number(i.value); });
+    card.querySelectorAll('button').forEach((b) => (b.disabled = true));
+    try { await edge(v, { batch_id, amounts }); toast((v === 'approve' ? t('approved') : t('rejected')) + (DEMO ? ' ' + t('demoNoTg') : '')); }
+    catch (err) { toast(t('error', err.message || err), 6000); }
+    await refresh();
+  }
+  else if (act === 'backup') {
+    UI.busy.backup = true; render();
+    try { await edge('backup'); UI.busy.backup = 'done'; await loadData(); render(); setTimeout(() => { UI.busy.backup = false; if (UI.admin) render(); }, 2500); }
+    catch (err) { UI.busy.backup = false; toast(t('error', err.message || err), 6000); render(); }
+  }
+  else if (act === 'remind') {
+    UI.busy.remind = true; render();
+    try { await edge('remind'); toast(t('remSent') + (DEMO ? ' ' + t('demoNoTg') : '')); } catch (err) { toast(t('error', err.message || err), 6000); }
+    UI.busy.remind = false; render();
+  }
+  else if (act === 'stop') openStop(memberById(Number(v)));
+  else if (act === 'dlgClose') $('#dlg').close();
+  else if (act === 'react') {
+    const m = memberById(Number(v)), ob = openBreak(m); if (!ob) return;
+    try {
+      if (mi(ob.from_month) >= NOW()) await api.remove('member_breaks', ob.id);
+      else await api.update('member_breaks', ob.id, { to_month: miDate(NOW() - 1) });
+      toast(t('reactivated', m.name)); await refresh();
+    } catch (err) { toast(t('error', err.message || err), 6000); }
+  }
+  else if (act === 'unlink') {
+    const m = memberById(Number(v)); if (!confirm(t('confirmUnlink', m.name))) return;
+    try { await api.update('members', m.id, { tg_chat_id: null }); await refresh(); } catch (err) { toast(t('error', err.message || err), 6000); }
+  }
+  else if (act === 'delMember') {
+    const m = memberById(Number(v));
+    if (S.cashIn.some((p) => p.member_id === m.id || p.sent_by === m.id)) return toast(t('cantDel'));
+    if (!confirm(t('confirmDel', m.name))) return;
+    try { await api.remove('members', m.id); await refresh(); } catch (err) { toast(t('error', err.message || err), 6000); }
+  }
+  else if (act === 'tpl') download('tabungfamily-import-template.csv', '﻿' + templateCSV(), 'text/csv;charset=utf-8');
+  else if (act === 'impAgain') { UI.imp = null; UI.impDone = null; render(); }
+  else if (act === 'doImport') { const o = $('#impOpen'); if (o) UI.imp.open = o.value; doImport(); }
+  else if (act === 'seeYear') { e.preventDefault(); UI.year = Number(v); UI.impDone = null; location.hash = ''; }
+});
+document.addEventListener('change', async (e) => {
+  const el = e.target;
+  if (el.id === 'impFile' && el.files[0]) {
+    try {
+      const imp = await readImportFile(el.files[0]);
+      imp.create = false; imp.skipDup = true; imp.open = S.settings.opening_balance ?? '0';
+      markImport(imp); UI.imp = imp; UI.impDone = null; render();
+    } catch (err) { toast(t('error', err.message || err), 6000); }
+  }
+  if (el.dataset?.act === 'impOpt') { const o = $('#impOpen'); if (o) UI.imp.open = o.value; UI.imp[el.dataset.v] = el.checked; render(); }
+});
+document.addEventListener('submit', async (e) => {
+  const f = e.target; if (f.id === 'fStop' || f.method === 'dialog' && f.id === 'fStop') return;
+  e.preventDefault();
+  const btn = f.querySelector('[type=submit]'); if (btn) btn.disabled = true;
+  try {
+    if (f.id === 'loginForm') {
+      if (DEMO) { UI.adminOk = true; return render(); }
+      const { error } = await sb.auth.signInWithPassword({ email: $('#lgE').value.trim(), password: $('#lgP').value });
+      if (error) return renderLogin(error.message);
+      const { data: ok } = await sb.rpc('is_admin');
+      if (!ok) { await sb.auth.signOut(); return renderLogin(t('notAdmin')); }
+      UI.adminOk = true; await refresh();
+    } else if (f.id === 'fIn') {
+      const amount = Number($('#iA').value), member_id = Number($('#iM').value) || null, paid_on = $('#iD').value, kind = $('#iK').value, fm = $('#iF').value;
+      if (!(amount > 0) || !paid_on) throw new Error(t('badInput'));
+      if (!member_id && kind !== 'sumbangan') throw new Error(t('otherNeedsSumb'));
+      await api.insert('cash_in', { member_id, paid_on, amount, method: $('#iC').value, sent_by: member_id, source: 'manual', status: 'approved', kind, for_month: kind === 'yuran' && fm ? fm + '-01' : null });
+      toast(t('saved')); await refresh();
+    } else if (f.id === 'fOut') {
+      const file = $('#oF').files[0], legacy = $('#oL').checked, amount = Number($('#oA').value), description = $('#oD').value.trim();
+      const errEl = $('#oErr');
+      if (!file && !legacy) { errEl.textContent = t('needReceipt'); errEl.hidden = false; return; }
+      if (!(amount > 0) || !description) throw new Error(t('badInput'));
+      let receipt_url = null;
+      if (file) {
+        toast(t('uploading'), 20000);
+        const day = $('#oT').value;
+        const r = await edge('upload', { name: `OUT_${day}_${$('#oC').value}_${amount}_${file.name}`, mime: file.type || 'application/octet-stream', data: DEMO ? '' : await fileB64(file), public: true, folder: day.slice(0, 7) });
+        receipt_url = DEMO ? URL.createObjectURL(file) : r.url;
+      }
+      await api.insert('cash_out', { spent_on: $('#oT').value, description, category: $('#oC').value, amount, receipt_url, legacy: !receipt_url, source: 'manual' });
+      toast(t('saved')); await refresh();
+    } else if (f.id === 'fMem') {
+      const name = $('#nN').value.trim(), sm = $('#nS').value;
+      if (!name || !sm) throw new Error(t('badInput'));
+      await api.insert('members', { name, start_month: sm + '-01' });
+      toast(t('saved')); await refresh();
+    } else if (f.id === 'fSet') {
+      await api.settings({ monthly_due: Number($('#sF').value) || 100, fund_name: $('#sN').value.trim() || 'TabungFamily', opening_balance: Number($('#sO').value) || 0 });
+      toast(t('saved')); await refresh();
+    }
+  } catch (err) { toast(t('error', err.message || err), 6000); }
+  finally { if (btn && document.contains(btn)) btn.disabled = false; }
+});
+
+/* ------------------------------------------------------------------ router */
+function render() {
+  UI.admin = location.hash === '#admin';
+  renderHeader();
+  if (!UI.admin) return renderPublic();
+  if (!UI.adminOk) return renderLogin();
+  renderAdmin();
+}
+let lastRoute = null;
+window.addEventListener('hashchange', async () => {
+  const wasAdmin = lastRoute === '#admin', isAdmin = location.hash === '#admin';
+  lastRoute = isAdmin ? '#admin' : 'public';
+  if (wasAdmin !== isAdmin) { window.scrollTo(0, 0); render(); }
+  else renderHeader();
+  if (!isAdmin) {
+    const id = location.hash.slice(1), el = id && document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (!id) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+(async function init() {
+  lastRoute = location.hash === '#admin' ? '#admin' : 'public';
+  try {
+    if (!DEMO) {
+      await loadScript(SUPABASE_JS);
+      sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) { const { data: ok } = await sb.rpc('is_admin'); UI.adminOk = !!ok; }
+    }
+    await loadData();
+    render();
+    const id = location.hash.slice(1), el = id && id !== 'admin' && document.getElementById(id);
+    if (el) el.scrollIntoView();
+  } catch (e) {
+    renderHeader();
+    $('#app').innerHTML = `<main class="wrap"><div class="card" style="margin-top:30px"><p class="err">${h(t('loadErr', e.message || e))}</p></div></main>`;
+  }
+})();
+</script>
+</body>
+</html>
