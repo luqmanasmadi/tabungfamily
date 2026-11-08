@@ -160,6 +160,20 @@ details.tv summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:3
 .foot{margin-top:34px;padding:22px 0;color:var(--muted);font-size:13px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
 .demo-bar{background:var(--sun);color:var(--ink);text-align:center;font-size:13px;font-weight:600;padding:8px 16px}
 
+/* collapsible sections */
+section.foldable{position:relative}
+section.foldable>.fold{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--muted);display:grid;place-items:center;cursor:pointer;z-index:1}
+section.foldable>.fold:hover{border-color:var(--rose);color:var(--ink)}
+section.foldable>.fold:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+section.foldable>.fold svg{transition:transform .2s}
+section.foldable.folded>.fold svg{transform:rotate(-90deg)}
+section.foldable h2[data-fold]{cursor:pointer}
+section.foldable>.sec-h,section.foldable>h2,section.foldable>p.eyebrow{padding-right:48px}
+section.foldable.folded>*:not(.fold):not(.sec-h):not(h2):not(p.eyebrow){display:none!important}
+section.foldable.folded>.sec-h>*:not(:first-child){display:none!important}
+section.foldable.folded>.sec-h{margin-bottom:0}
+@media (prefers-reduced-motion:reduce){section.foldable>.fold svg{transition:none}}
+
 /* bottom nav (phone) */
 .bnav{display:none}
 
@@ -289,7 +303,7 @@ const OTHER_NAMES = ['lain-lain', 'lain lain', 'lainlain', 'lain', 'other', 'oth
 /* ------------------------------------------------------------------ i18n */
 const L = {
   ringkasan: ['Ringkasan', 'Overview'], ahli: ['Ahli', 'Members'], keluar: ['Duit keluar', 'Spending'],
-  utama: ['Utama', 'Home'], keluarS: ['Keluar', 'Spending'], admin: ['Admin', 'Admin'],
+  utama: ['Utama', 'Home'], collapse: ['Tutup bahagian', 'Collapse section'], expand: ['Buka bahagian', 'Expand section'], keluarS: ['Keluar', 'Spending'], admin: ['Admin', 'Admin'],
   year: ['Tahun', 'Year'], heroEyebrow: ['Tabung keluarga', 'Family fund'],
   heroH1: ['Duit keluarga, <em>telus</em> untuk semua.', 'Family money, <em>open</em> to everyone.'],
   heroP: ['Setiap ringgit masuk dan keluar direkod di sini. Semua boleh semak, hanya bendahari boleh ubah.',
@@ -1202,6 +1216,8 @@ function download(name, text, type) {
 const fileB64 = (file) => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = bad; r.readAsDataURL(file); });
 
 document.addEventListener('click', async (e) => {
+  const f = e.target.closest('[data-fold]');
+  if (f && !e.target.closest('a,input,select,label,[data-act]')) { toggleFold(f.dataset.fold); return; }
   const el = e.target.closest('[data-act]'); if (!el || el.tagName === 'INPUT') return;
   const act = el.dataset.act, v = el.dataset.v;
   if (act === 'lang') { lang = v; try { localStorage.setItem('tf_lang', v); } catch (_) { /* ignore */ } render(); }
@@ -1316,9 +1332,42 @@ document.addEventListener('submit', async (e) => {
 function render() {
   UI.admin = location.hash === '#admin';
   renderHeader();
-  if (!UI.admin) return renderPublic();
-  if (!UI.adminOk) return renderLogin();
-  renderAdmin();
+  if (!UI.admin) renderPublic();
+  else if (!UI.adminOk) renderLogin();
+  else renderAdmin();
+  makeCollapsible();
+}
+
+/* Every titled section (card with aria-labelledby) gets a fold button. Folded sections are remembered
+   per viewer in localStorage, keyed by the section's heading id. */
+const FOLD_KEY = 'tf_folded';
+let folded = {};
+try { folded = JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { folded = {}; }
+function makeCollapsible() {
+  document.querySelectorAll('#app section.card[aria-labelledby]').forEach((sec) => {
+    const id = sec.getAttribute('aria-labelledby'), h = document.getElementById(id);
+    if (!h || sec.querySelector(':scope > .fold')) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'fold'; b.dataset.fold = id;
+    b.setAttribute('aria-controls', id);
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    sec.classList.add('foldable');
+    sec.prepend(b);
+    h.dataset.fold = id; h.title = '';
+    setFold(sec, !!folded[id]);
+  });
+}
+function setFold(sec, on) {
+  sec.classList.toggle('folded', on);
+  const b = sec.querySelector(':scope > .fold');
+  if (b) { b.setAttribute('aria-expanded', String(!on)); b.setAttribute('aria-label', on ? t('expand') : t('collapse')); }
+}
+function toggleFold(id) {
+  const sec = document.querySelector(`#app section.card[aria-labelledby="${id}"]`); if (!sec) return;
+  const on = !sec.classList.contains('folded');
+  setFold(sec, on);
+  if (on) folded[id] = 1; else delete folded[id];
+  try { localStorage.setItem(FOLD_KEY, JSON.stringify(folded)); } catch (e) { /* storage blocked: fold lasts this visit */ }
 }
 let lastRoute = null;
 window.addEventListener('hashchange', async () => {
